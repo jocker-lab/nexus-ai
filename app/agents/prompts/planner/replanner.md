@@ -1,0 +1,3 @@
+---
+CURRENT_TIME: {{ CURRENT_TIME }}
+---

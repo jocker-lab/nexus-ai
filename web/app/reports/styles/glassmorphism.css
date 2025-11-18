@@ -1,0 +1,211 @@
+/* 优化版玻璃态效果样式 - 性能优先、清晰可读 */
+
+/* 主玻璃卡片 */
+.glass-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+}
+
+/* 暗黑模式玻璃卡片 */
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+}
+
+/* 内容玻璃容器 - 高对比度以提升可读性 */
+.glass-content {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(15px) saturate(150%);
+  -webkit-backdrop-filter: blur(15px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+}
+
+.dark .glass-content {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.12);
+}
+
+/* 侧边栏玻璃 - 降低模糊以提升性能 */
+.glass-sidebar {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+}
+
+.dark .glass-sidebar {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.1);
+}
+
+/* 按钮玻璃态 - 改为蓝色 */
+.glass-button {
+  background: rgba(59, 130, 246, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-button:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.25);
+  transform: translateY(-2px);
+}
+
+.glass-button:active {
+  transform: translateY(0);
+}
+
+.dark .glass-button {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.dark .glass-button:hover {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+/* 代码块玻璃态 - 高对比度保证代码可读 */
+.glass-code {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* 悬浮卡片效果 */
+.glass-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+/* 渐变边框玻璃 - 简化实现 */
+.glass-gradient-border {
+  position: relative;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid transparent;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15)),
+    linear-gradient(135deg, #3b82f6, #0ea5e9);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+.dark .glass-gradient-border {
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)),
+    linear-gradient(135deg, #3b82f6, #0ea5e9);
+}
+
+/* 发光效果玻璃 */
+.glass-glow {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 16px rgba(59, 130, 246, 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.dark .glass-glow {
+  background: rgba(15, 23, 42, 0.75);
+  box-shadow:
+    0 4px 16px rgba(59, 130, 246, 0.25),
+    inset 0 1px 1px rgba(59, 130, 246, 0.25);
+}
+
+/* 进度条玻璃 */
+.glass-progress {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.dark .glass-progress {
+  background: rgba(30, 41, 59, 0.6);
+}
+
+/* 工具提示玻璃 */
+.glass-tooltip {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* 模态框玻璃背景 */
+.glass-modal-backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* 滚动条玻璃化 - 更明显的视觉反馈 */
+.glass-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.glass-scrollbar::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.3);
+  border-radius: 5px;
+}
+
+.glass-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.4);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.glass-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.6);
+  background-clip: padding-box;
+}
+
+.dark .glass-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.dark .glass-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.5);
+  background-clip: padding-box;
+}
+
+.dark .glass-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
+  background-clip: padding-box;
+}
+
+/* 性能优化提示 */
+/*
+  优化说明：
+  - 将 blur 从 25-30px 降低到 10-15px，大幅提升渲染性能
+  - 降低 saturate 从 180-200% 到 140-150%，减少色彩过度饱和
+  - 提高背景不透明度（0.7-0.85），确保文字有足够对比度
+  - 简化渐变边框实现，避免伪元素的额外渲染开销
+  - 优化滚动条样式，提供更好的视觉反馈
+*/

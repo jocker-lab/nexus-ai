@@ -1,0 +1,38 @@
+# -*- coding: utf-8 -*-
+"""
+配置模块统一入口
+从 settings.py 导出配置，保持向后兼容
+"""
+from app.config.settings import (
+    settings,
+    MYSQL_DATABASE_URL,
+    LOCAL_BIG_MODEL_PARAMS,
+    DATABASE_SCHEMA,
+    DATABASE_POOL_SIZE,
+    DATABASE_POOL_MAX_OVERFLOW,
+    DATABASE_POOL_TIMEOUT,
+    DATABASE_POOL_RECYCLE,
+)
+
+# MinIO 配置导出
+MINIO_ENDPOINT = settings.MINIO_ENDPOINT
+MINIO_ACCESS_KEY = settings.MINIO_ACCESS_KEY
+MINIO_SECRET_KEY = settings.MINIO_SECRET_KEY
+MINIO_BUCKET = settings.MINIO_BUCKET
+MINIO_SECURE = settings.MINIO_SECURE
+
+__all__ = [
+    'settings',
+    'MYSQL_DATABASE_URL',
+    'LOCAL_BIG_MODEL_PARAMS',
+    'DATABASE_SCHEMA',
+    'DATABASE_POOL_SIZE',
+    'DATABASE_POOL_MAX_OVERFLOW',
+    'DATABASE_POOL_TIMEOUT',
+    'DATABASE_POOL_RECYCLE',
+    'MINIO_ENDPOINT',
+    'MINIO_ACCESS_KEY',
+    'MINIO_SECRET_KEY',
+    'MINIO_BUCKET',
+    'MINIO_SECURE',
+]

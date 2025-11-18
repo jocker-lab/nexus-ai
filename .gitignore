@@ -241,10 +241,13 @@ frontend_v*.html
 *.backup
 *.old
 
+# ========== Project Documentation ==========
+# Ignore Claude Code specific instructions (internal development guide)
+CLAUDE.md
+
 # ========== Keep Important Files ==========
 # Force include important documentation
 !README.md
-!CLAUDE.md
 !docs/**/*.md
 !.env.example
 !config.example.yaml
