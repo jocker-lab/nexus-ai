@@ -34,16 +34,16 @@ def create_chapter_subgraph():
     subgraph = StateGraph(ChapterState)
 
     # 添加节点
-    subgraph.add_node("researcher", chapter_researcher)
+    subgraph.add_node("researcher_prompts", chapter_researcher)
     subgraph.add_node("writer", chapter_content_writer)
     subgraph.add_node("reviewer", chapter_reviewer)
     subgraph.add_node("finalizer", chapter_finalizer)
 
     # 入口
-    subgraph.set_entry_point("researcher")
+    subgraph.set_entry_point("researcher_prompts")
 
     # 固定边
-    subgraph.add_edge("researcher", "writer")
+    subgraph.add_edge("researcher_prompts", "writer")
     subgraph.add_edge("writer", "reviewer")
 
     # 条件边：审查后决策

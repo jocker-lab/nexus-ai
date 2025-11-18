@@ -20,7 +20,7 @@ from langchain.messages import AIMessage
 from app.agents.core.publisher.blueprint.state import PlanExecuteState
 from app.agents.schemas.blueprint_schema import Plan, StepType, Step, StepExecution, ReplanSteps, \
     CoordinatorDecision
-from app.agents.prompts.planner.replanner_prompt import replanner_prompt
+from app.agents.prompts.publisher_prompts.planner.replanner_prompt import replanner_prompt
 from app.agents.prompts.template import apply_prompt_template
 
 

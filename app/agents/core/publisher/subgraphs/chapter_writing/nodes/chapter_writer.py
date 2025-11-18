@@ -43,9 +43,7 @@ async def chapter_content_writer(state: ChapterState) -> Dict[str, Any]:
             "locale": outline.language,
         }
     )
-    print("========" * 10)
-    print(system_messages)
-    print("system_messages" * 10)
+
     # === 3. 创建 Agent ===
     agent = create_agent(
         model=llm,
@@ -56,23 +54,15 @@ async def chapter_content_writer(state: ChapterState) -> Dict[str, Any]:
     # === 4. 准备用户输入 ===
     # 使用 Jinja2 模板生成任务描述
     user_messages = render_prompt_template(
-        "chapter_writing/chapter_writer_task",
+        "publisher_prompts/chapter_writing/chapter_writer_task",
         state
     )
-
-    print("========" * 10)
-    print(user_messages)
-    print("========" * 10)
-    # 记录 prompt（Agent 的用户输入）
 
     try:
         logger.info(f"    ↳ 启动 Agent（带绘图能力）...")
 
         response = await agent.ainvoke(
-            {"messages": [{"role": "user", "content": user_messages}]},
-            config={
-                "recursion_limit": 50,  # 允许多次工具调用
-            }
+            {"messages": [{"role": "user", "content": user_messages}]}, config={"recursion_limit": 50}
         )
 
         # 提取最终内容（最后一条 AI 消息）

@@ -12,6 +12,9 @@ from loguru import logger
 from langchain_deepseek import ChatDeepSeek
 from app.agents.core.publisher.writing.state import DocumentState
 from app.agents.core.publisher.writing import config
+from langchain.chat_models import init_chat_model
+from app.agents.prompts.template import render_prompt_template
+
 
 
 async def document_integrator(state: DocumentState) -> Dict[str, Any]:
@@ -47,42 +50,30 @@ async def document_integrator(state: DocumentState) -> Dict[str, Any]:
 
     combined_chapters = "\n\n".join(chapters_content)
 
-    # === 2. 构建 LLM Prompt（简洁明确） ===
+    # === 2. 构建 LLM Prompt（使用 Jinja2 模板） ===
     logger.info("  ↳ 调用 LLM 进行智能整合...")
 
-    llm = ChatDeepSeek(
-        model=config.MODEL_NAME,
-        max_tokens=config.MAX_TOKENS,
-        temperature=config.TEMPERATURE,
+    llm = init_chat_model("deepseek:deepseek-chat")
+
+    # 使用 Jinja2 模板渲染系统提示
+    system_prompt = render_prompt_template(
+        "publisher_prompts/document_writing/document_integrator_system",
+        {
+            "language": outline.language,
+            "writing_style": outline.writing_style,
+            "writing_tone": outline.writing_tone,
+        }
     )
 
-    # 系统提示：定义角色和任务
-    system_prompt = f"""你是一位专业的文档编辑专家。
-
-    任务：将以下{total_chapters}个独立章节整合成一份完整、连贯的文档。
-    
-    要求：
-    1. **标题**：生成文档标题「{outline.title}」
-    2. **目录**：自动生成完整目录（包含所有章节和小节）
-    3. **章节过渡**：在章节之间添加自然的过渡语句，确保逻辑连贯
-    4. **参考文献**：提取所有章节中的引用，在文档末尾生成统一的「参考文献」部分
-    5. **格式统一**：确保 Markdown 格式规范、标题层级正确
-    6. **语言风格**：{outline.writing_style}，语气：{outline.writing_tone}
-    
-    输出要求：
-    - 直接输出完整的 Markdown 文档
-    - 不要添加任何解释性文字
-    - 不要使用代码块包裹（```markdown）
-    - 保持原章节内容的完整性和准确性
-    """
-
-    user_prompt = f"""请整合以下章节：
-    
-    {combined_chapters}
-    
-    ---
-    请输出完整的文档内容（Markdown 格式）。
-    """
+    # 使用 Jinja2 模板渲染用户任务
+    user_prompt = render_prompt_template(
+        "publisher_prompts/document_writing/document_integrator_task",
+        {
+            "outline": outline,
+            "total_chapters": total_chapters,
+            "combined_chapters": combined_chapters,
+        }
+    )
 
     try:
         # 调用 LLM

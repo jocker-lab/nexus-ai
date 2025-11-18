@@ -682,7 +682,7 @@ async def test_chapter_writing_subgraph():
 
     # 3. 执行 Subgraph
     logger.info("🚀 步骤 3/3: 执行 Chapter Writing 流程...")
-    logger.info("   节点执行顺序: researcher → writer → reviewer → [decision] → finalizer\n")
+    logger.info("   节点执行顺序: researcher_prompts → writer → reviewer → [decision] → finalizer\n")
 
     try:
         # 异步调用
@@ -767,10 +767,10 @@ async def test_individual_nodes():
     except Exception as e:
         logger.error(f"   ✗ Researcher 测试失败: {e}")
 
-    # 测试 2: Writer（需要 researcher 的输出）
+    # 测试 2: Writer（需要 researcher_prompts 的输出）
     logger.info("2️⃣ 测试 chapter_content_writer...")
     try:
-        # 模拟 researcher 输出
+        # 模拟 researcher_prompts 输出
         writer_state = {**initial_state, "synthesized_materials": "测试素材内容"}
         writer_result = await chapter_content_writer(writer_state)
         assert "draft_content" in writer_result
