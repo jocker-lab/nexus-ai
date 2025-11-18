@@ -1,0 +1,32 @@
+# ========================================
+# Nexus AI - Configuration Example
+# ========================================
+# Copy this file to config.yaml and fill in your actual values
+# IMPORTANT: config.yaml is gitignored to protect sensitive data
+
+# 数据库连接池配置
+database:
+  pool:
+    pool_size: 5          # 连接池大小
+    max_overflow: 10      # 最大溢出连接数
+    pool_timeout: 30      # 连接超时（秒）
+    pool_recycle: 3600    # 连接回收时间（秒）
+
+# MinIO对象存储配置
+# 注意: 实际的 endpoint、access_key、secret_key 等敏感信息应该放在 .env 文件中
+# 可用环境变量: MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, MINIO_BUCKET, MINIO_SECURE
+
+# 大模型参数配置
+# 注意: API Key 应该通过环境变量 OPENAI_API_KEY 设置
+model_params:
+  model: "gpt-4"                              # 模型名称
+  openai_api_base: "https://api.openai.com/v1"  # API Base URL (替换为你的实际地址)
+  max_tokens: 8192                            # 最大 token 数
+  temperature: 0.7                            # 温度参数 (0-2)
+  top_p: 0.8                                  # Top-p 采样
+  request_timeout: 120                        # 请求超时（秒）
+  presence_penalty: 1.5                       # 存在惩罚
+  extra_body:
+    top_k: 20                                 # Top-k 采样
+    chat_template_kwargs:
+      enable_thinking: false                  # 是否启用思考模式

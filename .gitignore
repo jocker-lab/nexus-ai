@@ -1,0 +1,250 @@
+# ========================================
+# Nexus AI - .gitignore
+# ========================================
+
+# ========== Python ==========
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# ========== Environment & Secrets ==========
+# Environment files with sensitive data
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Configuration files (IMPORTANT: Contains API keys!)
+app/config/config.yaml
+
+# Keep example config template
+!app/config/config.example.yaml
+
+# ========== Database ==========
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Database migrations (keep migration files, ignore data)
+# migrations/versions/*.pyc
+
+# MySQL dumps
+*.sql
+*.dump
+
+# ========== Logs ==========
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pip-log.txt
+
+# ========== Node.js / Frontend ==========
+# Dependencies
+node_modules/
+web/node_modules/
+
+# Next.js
+.next/
+out/
+web/.next/
+web/out/
+
+# Production build
+build/
+
+# Misc frontend
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files (Next.js)
+web/.env.local
+web/.env.development.local
+web/.env.test.local
+web/.env.production.local
+
+# Vercel
+.vercel
+
+# ========== IDEs & Editors ==========
+# VSCode
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PyCharm / IntelliJ
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Vim
+*.swp
+*.swo
+*~
+.*.sw[a-z]
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# ========== Docker ==========
+# Docker volumes and data
+docker/data/
+docker/volumes/
+*.dockerignore
+
+# Docker compose override
+docker-compose.override.yml
+
+# ========== MinIO / Object Storage ==========
+# MinIO data directory (if local)
+minio-data/
+.minio/
+
+# ========== Generated Files ==========
+# Generated charts and images
+charts/
+generated_charts/
+temp_charts/
+*.png.tmp
+*.jpg.tmp
+
+# Generated reports (if saved locally)
+reports/output/
+temp_reports/
+
+# ========== OS-specific ==========
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ========== Serena MCP ==========
+# Serena memory/cache files
+.serena/
+
+# ========== Testing ==========
+# Test outputs
+test_output/
+test_results/
+.coverage
+htmlcov/
+
+# ========== Alembic ==========
+# Keep migration files, ignore cache
+alembic.ini.local
+
+# ========== Temporary Files ==========
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+.cache/
+
+# ========== Project-specific ==========
+# FastAPI test files (if needed)
+fastapi_sse_server_*.py
+
+# Mock frontend files
+frontend_v*.html
+*_mock.html
+
+# Local development files
+*.local.*
+
+# Backup files
+*.backup
+*.old
+
+# ========== Keep Important Files ==========
+# Force include important documentation
+!README.md
+!CLAUDE.md
+!docs/**/*.md
+!.env.example
+!config.example.yaml
