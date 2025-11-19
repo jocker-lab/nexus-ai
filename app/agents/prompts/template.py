@@ -67,7 +67,6 @@ def render_prompt_template(prompt_name: str, context: Dict[str, Any], add_timest
 
 
 
-
 def apply_prompt_template(prompt_name: str, state: Dict[str, Any]) -> list:
     """
     Apply template variables to a prompt template and return formatted messages.
