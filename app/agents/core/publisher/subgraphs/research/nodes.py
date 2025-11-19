@@ -74,7 +74,7 @@ async def execute_single_research_node(state: ResearcherState):
 
     logger.info(f"🔍 执行研究任务: {topic}")
 
-    system_prompt = apply_prompt_template("researcher_prompts/researcher_prompts", state)
+    system_prompt = apply_prompt_template("researcher_prompts/researcher", state)
 
     task_formatted = f"""
     Research the following topic:

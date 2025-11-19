@@ -26,7 +26,7 @@ async def chapter_researcher(state: ChapterState) -> Dict[str, Any]:
 
         # 使用 apply_prompt_template 加载 prompt
         messages = apply_prompt_template(
-            "chapter_writing/research_query_generation",
+            "publisher_prompts/chapter_writing/research_query_generation",
             {
                 "chapter_title": chapter_title,
                 "chapter_outline": state["chapter_outline"],
