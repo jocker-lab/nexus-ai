@@ -290,13 +290,128 @@ async def test_chapter_researcher_query_generation():
 
 
 @pytest.mark.asyncio
+async def test_chapter_researcher_optimized_search():
+    """
+    测试用例4：验证优化后的搜索策略
+    验证：生成4个diverse查询，每个查询返回5个结果 = 总共20个网页
+    重点检查查询的多样性和搜索结果的质量
+    """
+    logger.info("=" * 80)
+    logger.info("测试用例4：优化后的搜索策略验证（4 diverse queries × 5 results）")
+    logger.info("=" * 80)
+
+    # 创建一个专门的测试章节，用于验证多样性
+    test_chapter = Section(
+        title="云计算技术发展现状与趋势",
+        description=(
+            "全面分析云计算技术在2024-2025年的发展状况，"
+            "包括市场规模、技术架构演进、安全挑战和应用案例。"
+        ),
+        writing_guidance=(
+            "采用多维度分析框架，从技术、市场、应用、安全等不同角度切入。"
+            "每个维度需要独立的数据支撑和案例验证。"
+        ),
+        content_requirements=(
+            "需要：(1) 全球云计算市场规模数据, "
+            "(2) 主流云服务商技术对比, "
+            "(3) 企业上云案例分析, "
+            "(4) 云安全事件统计, "
+            "(5) 行业专家对未来趋势的预测。"
+        ),
+        visual_elements=True,
+        estimated_words=1500,
+        writing_priority="high",
+        subsections=[
+            SubSection(
+                sub_section_title="云计算市场规模与增长",
+                description="分析全球和中国云计算市场的规模、增长率和竞争格局。",
+                writing_guidance="使用权威机构数据，对比AWS、Azure、阿里云等主要厂商。",
+                estimated_word_count=400
+            ),
+            SubSection(
+                sub_section_title="云原生技术架构演进",
+                description="探讨容器化、微服务、Serverless等云原生技术的发展。",
+                writing_guidance="结合技术案例和架构图，说明技术演进路径。",
+                estimated_word_count=500
+            ),
+            SubSection(
+                sub_section_title="云安全挑战与应对",
+                description="分析云环境下的安全风险和最佳实践。",
+                writing_guidance="引用真实安全事件，提供可落地的安全建议。",
+                estimated_word_count=400
+            ),
+            SubSection(
+                sub_section_title="企业云迁移实践",
+                description="分享典型企业的云迁移经验和教训。",
+                writing_guidance="选择不同行业的代表性案例，提炼共性问题。",
+                estimated_word_count=200
+            ),
+        ]
+    )
+
+    test_state = {
+        "chapter_id": 100,
+        "document_outline": create_test_document_outline(),
+        "chapter_outline": test_chapter,
+        "target_word_count": 1500,
+    }
+
+    logger.info("\n📋 测试目标:")
+    logger.info("  ✓ 验证生成的查询数量是否为 4 个")
+    logger.info("  ✓ 验证查询是否覆盖不同维度（市场/技术/安全/应用）")
+    logger.info("  ✓ 验证每个查询返回约 5 个搜索结果")
+    logger.info("  ✓ 验证总网页数约为 20 个（4×5）")
+    logger.info("  ✓ 验证研究结果质量和多样性\n")
+
+    # 执行研究节点
+    result = await chapter_researcher(test_state)
+
+    # 验证输出
+    assert "synthesized_materials" in result, "缺少研究结果字段"
+    assert isinstance(result["synthesized_materials"], str), "研究结果应该是字符串"
+    assert len(result["synthesized_materials"]) > 500, "研究结果内容太少"
+
+    # 统计结果
+    materials = result["synthesized_materials"]
+    logger.info("\n" + "=" * 80)
+    logger.info("📊 搜索优化效果统计")
+    logger.info("=" * 80)
+    logger.success(f"✅ 研究素材总长度: {len(materials):,} 字符")
+
+    # 检查是否包含多个主题的研究结果
+    topic_count = materials.count("## Topic:")
+    logger.info(f"📌 研究主题数量: {topic_count} 个")
+
+    if topic_count == 4:
+        logger.success("✅ 查询数量验证通过：恰好4个查询")
+    elif topic_count < 4:
+        logger.warning(f"⚠️  查询数量少于预期：{topic_count}/4")
+    else:
+        logger.warning(f"⚠️  查询数量多于预期：{topic_count}/4")
+
+    # 预览研究结果
+    logger.info("\n" + "=" * 80)
+    logger.info("📖 研究结果预览（前800字符）")
+    logger.info("=" * 80)
+    logger.info(materials[:800] + "...\n")
+
+    logger.info("💡 手动检查要点:")
+    logger.info("  1. 查看日志中生成的4个查询是否覆盖不同维度")
+    logger.info("  2. 每个查询的搜索结果是否为5个左右")
+    logger.info("  3. 研究内容是否涵盖市场、技术、安全、应用等多个角度")
+    logger.info("  4. 是否避免了大量重复信息")
+
+    return result
+
+
+@pytest.mark.asyncio
 async def test_chapter_researcher_error_handling():
     """
-    测试用例4：错误处理测试
+    测试用例5：错误处理测试
     测试当章节大纲不完整时的容错能力
     """
     logger.info("=" * 80)
-    logger.info("测试用例4：错误处理与容错能力测试")
+    logger.info("测试用例5：错误处理与容错能力测试")
     logger.info("=" * 80)
 
     # 创建一个最简化的章节大纲（缺少部分字段）
@@ -341,6 +456,7 @@ async def run_all_tests():
         ("AI市场分析章节研究", test_chapter_researcher_case_1),
         ("数字化转型章节研究", test_chapter_researcher_case_2),
         ("搜索查询质量验证", test_chapter_researcher_query_generation),
+        ("优化搜索策略验证（4×5）", test_chapter_researcher_optimized_search),
         ("错误处理测试", test_chapter_researcher_error_handling),
     ]
 

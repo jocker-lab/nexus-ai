@@ -21,7 +21,14 @@ def searcher(query: str, ):
     user for web search
     """
     client = TavilyClient(api_key=settings.TAVILY_API_KEY)
-    response = client.search(query, include_images=True , include_raw_content="markdown", include_image_descriptions=True, timeout=120)
+    response = client.search(
+        query,
+        max_results=5,  # 临时改回5用于测试summarization
+        include_images=True,
+        include_raw_content="markdown",
+        include_image_descriptions=True,
+        timeout=120
+    )
 
     all_results = []
 

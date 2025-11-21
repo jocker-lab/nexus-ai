@@ -19,7 +19,6 @@ from langchain.chat_models import init_chat_model
 from app.agents.core.publisher.subgraphs.research.state import ResearcherState
 from app.agents.prompts.template import apply_prompt_template
 
-
 def dispatch_research_tasks(state: ResearcherState):
     """
     入口节点：分发研究任务

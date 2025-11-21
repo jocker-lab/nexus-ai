@@ -27,7 +27,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 # ==================== 配置 ====================
 
 # 日志文件配置
-LOG_DIR = Path("logs/sse_streams")
+LOG_DIR = Path("test_output/logs/sse_streams")
 LOG_DIR.mkdir(exist_ok=True)
 
 # 🔥 关键配置：两个阶段的日志文件
