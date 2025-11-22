@@ -21,6 +21,7 @@ class ResearcherState(TypedDict):
     research_topics: List[str]  # 研究主题列表
     need_search: bool  # 是否需要搜索
     language: str  # 语言设置
+    writing_priority: Optional[str]  # 章节优先级 ("low", "normal", "high", "critical")
 
     # 中间状态（用于单个任务）
     current_topic: str                  # 当前正在处理的主题

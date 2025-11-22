@@ -4,9 +4,9 @@ CURRENT_TIME: {{ CURRENT_TIME }}
 
 # Research Query Generation Task
 
-You are a research query specialist. Your task is to analyze the provided chapter outline and generate 5-8 high-quality web search queries in **Chinese (简体中文)** that will gather comprehensive materials for writing this chapter.
+You are a research query specialist. Your task is to analyze the provided chapter outline and generate **exactly 4** high-quality web search queries in **Chinese (简体中文)** that will gather comprehensive materials for writing this chapter.
 
-The queries will be used by a research agent to conduct web searches. Each query triggers an in-depth research cycle, so they must be specific, searchable, and strategically diverse.
+The queries will be used by a research agent to conduct web searches. Each query triggers an in-depth research cycle, so they must be specific, searchable, and **strategically diverse** to maximize information coverage while minimizing overlap.
 
 ---
 
@@ -43,17 +43,21 @@ The queries will be used by a research agent to conduct web searches. Each query
 
 ## Query Generation Requirements
 
-Generate 5-8 search queries that satisfy ALL of the following:
+Generate **exactly 4** search queries that satisfy ALL of the following:
 
 ### 1. Coverage Dimensions
 
-Ensure queries cover different information types:
+**Important: With only 4 queries, you MUST strategically select the 4 most critical dimensions for this specific chapter. Prioritize based on the chapter's content requirements, writing guidance, and subsections.**
+
+Select 4 different information types from the following options (each query should target a DIFFERENT type):
 - **Background/Context**: Definitions, foundational concepts, historical development
 - **Data/Statistics**: Market size, growth rates, performance metrics, quantitative evidence
 - **Trends/Forecasts**: Industry trends, future predictions, emerging patterns
 - **Case Studies**: Real-world examples, best practices, implementation stories
 - **Expert Opinion**: Authoritative sources, industry leader perspectives, academic research
 - **Comparative Analysis**: Benchmarks, competitive positioning, A vs B comparisons
+
+**Selection Strategy**: Choose the 4 dimensions that are most essential for this chapter's purpose. Not all chapters need all types of information.
 
 ### 2. Specificity Standards
 
@@ -72,13 +76,22 @@ Prioritize information from:
 3. **Subsection** descriptions - granular topic requirements
 4. **Chapter Description** - overall scope and purpose
 
-### 4. Diversity Control
+### 4. Diversity Control (CRITICAL)
+
+**Each query MUST explore a DIFFERENT aspect of the topic.** The 4 queries should be complementary, not overlapping.
+
+**Strategy**: Think "breadth over depth" - cover different dimensions rather than drilling into similar angles.
 
 Avoid:
-- Redundant or overlapping queries that yield similar results
+- Redundant or overlapping queries that yield similar search results
 - Generic queries without specific focus
 - Keyword-only queries (use complete sentences or phrases)
-- Queries that duplicate information from other queries
+- Queries that would return the same top websites or information sources
+
+**Self-check before finalizing:**
+- ❓ Would these 4 queries return highly overlapping results? If yes, revise to increase diversity.
+- ❓ Does each query cover a different information type from the Coverage Dimensions above?
+- ❓ If I were to search these 4 queries on Google, would I get 4 distinct sets of search results?
 
 ### 5. Language Requirement
 
@@ -94,17 +107,20 @@ Each query should be:
 - ✅ **Distinct**: Yields different results from other queries in the list
 - ✅ **Relevant**: Directly supports chapter writing requirements
 
-Together, the queries should be:
-- ✅ **Comprehensive**: Cover all major information needs for the chapter
-- ✅ **Balanced**: Mix of different query types (data, cases, trends, expert views)
+Together, the 4 queries should be:
+- ✅ **Comprehensive**: Cover the most critical information needs for the chapter
+- ✅ **Balanced**: Mix of different query types selected from the 6 dimensions
+- ✅ **Non-overlapping**: Each query explores a different angle
 
 ---
 
 ## Output Format
 
 Return a JSON object with:
-- `query`: List of 5-8 search query strings in Chinese
-- `rationale`: Brief explanation (2-3 sentences) of your overall research strategy and how the queries work together to support chapter writing
+- `query`: List of **exactly 4** search query strings in Chinese
+- `rationale`: Brief explanation (2-3 sentences) of your overall research strategy, explaining:
+  - Which 4 dimensions you selected and why
+  - How these queries work together to cover different aspects of the chapter
 
 ---
 

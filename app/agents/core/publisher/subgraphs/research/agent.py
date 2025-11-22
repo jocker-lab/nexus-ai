@@ -48,7 +48,7 @@ def build_research_subgraph():
     return workflow.compile()
 
 
-async def run_research_subgraph(topics: List[str], need_search: bool, language: str = "zh-CN" ) -> str:
+async def run_research_subgraph(topics: List[str], need_search: bool, language: str = "zh-CN", writing_priority: str = "normal") -> str:
     """
     便捷函数：执行研究 subgraph
 
@@ -56,6 +56,7 @@ async def run_research_subgraph(topics: List[str], need_search: bool, language: 
         topics: 研究主题列表
         need_search: 是否需要搜索
         language: 语言设置
+        writing_priority: 章节优先级 ("low", "normal", "high", "critical")
 
     Returns:
         格式化的研究结果字符串
@@ -66,6 +67,7 @@ async def run_research_subgraph(topics: List[str], need_search: bool, language: 
         "research_topics": topics,
         "need_search": need_search,
         "language": language,
+        "writing_priority": writing_priority,
         "results": []
     }
 

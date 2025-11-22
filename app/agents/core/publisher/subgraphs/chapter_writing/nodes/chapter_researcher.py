@@ -48,8 +48,16 @@ async def chapter_researcher(state: ChapterState) -> Dict[str, Any]:
     logger.info(f"    ↳ 调用 Research Subgraph 执行并行研究...")
 
     try:
+        # 获取章节优先级
+        writing_priority = state["chapter_outline"].writing_priority if hasattr(state["chapter_outline"], "writing_priority") else "normal"
+
         # 执行并行研究
-        research_results = await run_research_subgraph(topics=queries[:4], need_search=True, language="zh-CN")
+        research_results = await run_research_subgraph(
+            topics=queries[:4],
+            need_search=True,
+            language="zh-CN",
+            writing_priority=writing_priority
+        )
 
         logger.success(f"    ✓ 研究完成 ({len(research_results)} 字符)\n")
 

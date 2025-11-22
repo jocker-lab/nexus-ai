@@ -29,8 +29,9 @@ def dispatch_research_tasks(state: ResearcherState):
     topics = state["research_topics"]
     need_search = state["need_search"]
     language = state["language"]
+    writing_priority = state.get("writing_priority", "normal")
 
-    logger.info(f"📚 分发 {len(topics)} 个研究任务进行并行处理")
+    logger.info(f"📚 分发 {len(topics)} 个研究任务进行并行处理 (优先级: {writing_priority})")
 
     # 创建 Send 对象列表
     sends = [
@@ -40,6 +41,7 @@ def dispatch_research_tasks(state: ResearcherState):
                 "current_topic": topic,
                 "need_search": need_search,
                 "language": language,
+                "writing_priority": writing_priority,
                 "research_topics": topics,
                 "results": []
             }
@@ -71,8 +73,9 @@ async def execute_single_research_node(state: ResearcherState):
     topic = state["current_topic"]
     need_search = state["need_search"]
     language = state["language"]
+    writing_priority = state.get("writing_priority", "normal")
 
-    logger.info(f"🔍 执行研究任务: {topic}")
+    logger.info(f"🔍 执行研究任务: {topic} (优先级: {writing_priority})")
 
     system_prompt = apply_prompt_template("researcher_prompts/researcher_prompts", state)
 
