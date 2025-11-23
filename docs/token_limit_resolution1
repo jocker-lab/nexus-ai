@@ -1,0 +1,55 @@
+  阶段1: 生成Blueprint（已有）
+
+  用户输入 → Planner
+    ↓
+  生成Blueprint（包含9个chapters）
+    ↓
+  每个Chapter包含：
+    - title
+    - description
+    - subsections
+    - estimated_words
+    - writing_priority ← 【新增】用于控制max_iterations
+
+  阶段2: 并行处理Chapters（新架构）
+
+  Blueprint拆分 → 9个Chapters
+    ↓
+  【并行Send】9个独立的DeepAgent同时运行
+    ↓
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Chapter 1 的DeepAgent:                    ║
+    ↓                                        ║
+    Step 1: 生成4个研究维度                  ║
+      输入: Chapter outline                  ║
+      输出: ["背景", "数据", "案例", "趋势"]  ║
+    ↓                                        ║  并
+    Step 2: 迭代研究+写作                    ║  行
+      Max iterations = priority_to_max[      ║  执
+        chapter.writing_priority]            ║  行
+                                             ║
+      第1轮:                                  ║
+        - 搜索信息                            ║
+        - 生成draft v1                       ║  9
+        - 评判：4个维度都覆盖了吗？           ║  个
+        - 如果没有 → 第2轮                   ║  C
+                                             ║  h
+      第2轮（如果需要）:                      ║  a
+        - 针对缺失维度搜索                    ║  p
+        - 改进draft v2                       ║  t
+        - 评判...                             ║  e
+        - 如果还有缺失 → 第3轮                ║  r
+                                             ║
+      ...                                    ║
+      达到max_iterations 或 全部维度满足     ║
+    ↓                                        ║
+    返回最终draft                             ║
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Chapter 2 的DeepAgent:                    ║
+    (同样的流程，并行运行)                    ║
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ...                                        ║
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Chapter 9 的DeepAgent:                    ║
+    (同样的流程，并行运行)                    ║
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
