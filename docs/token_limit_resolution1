@@ -53,3 +53,37 @@
   Chapter 9 的DeepAgent:                    ║
     (同样的流程，并行运行)                    ║
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+V2
+  完整流程
+
+  generate_dimensions_node:
+    输出: dimensions, current_query (初始综合query), iteration=0
+      ↓
+  search_node:
+    输入: current_query
+    执行: tavily_search(current_query, max_results=5)
+    输出: search_results
+      ↓
+  write_node:
+    输入: search_results, dimensions
+    输出: draft, iteration+1
+      ↓
+  evaluate_node:
+    输入: draft, dimensions
+    评估: 检查 4 个维度覆盖情况
+    输出: is_satisfied, next_query (如果不满足)
+      ↓
+  conditional_edge:
+    如果 satisfied → finalize
+    如果 not satisfied → current_query = next_query → 回到 search_node
+
+
+
+    state简化，prompt需要改成md template模式
+    dimension可以去掉
+    直接用titile des content 生成query查询 换成list[str]，可以取3个
+    然后合并所有的搜索内容进行写作，加上绘图的功能
+    然后直接对有图标的chapter draft进行review
+    conditional edge再判断

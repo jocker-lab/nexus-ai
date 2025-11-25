@@ -17,15 +17,17 @@ from app.agents.core.publisher.writing.nodes import (
     document_reviewer
 )
 
-from app.agents.core.publisher.subgraphs.chapter_writing.agent import create_chapter_subgraph
+from app.agents.core.publisher.subgraphs.chapter_content_generation.agent import create_iterative_chapter_subgraph
 
 def create_main_graph():
     """
     创建 Main Graph
 
     流程:
-        Chapter Dispatcher → [Subgraphs...] → Aggregator
+        Chapter Dispatcher → [Iterative Subgraphs...] → Aggregator
         → Document Integrator → Global Reviewer → END
+
+    ⭐ 使用新的迭代式章节生成 Subgraph (chapter_content_generation)
     """
     # === 1. 创建 StateGraph ===
     main_graph = StateGraph(DocumentState)
@@ -37,7 +39,8 @@ def create_main_graph():
     main_graph.add_node("document_reviewer", document_reviewer)
 
     # === 3. 添加 Subgraph ===
-    chapter_subgraph = create_chapter_subgraph()
+    # ⭐ 使用新的迭代式章节生成 Subgraph
+    chapter_subgraph = create_iterative_chapter_subgraph()
     main_graph.add_node("chapter_subgraph", chapter_subgraph)
 
     # === 4. 设置入口点 ===
@@ -45,7 +48,6 @@ def create_main_graph():
 
     # === 5. 添加边 ===
 
-    # 关键修复：chapter_subgraph 完成后去 aggregator，而不是 dispatcher 直接去 aggregator
     main_graph.add_edge("chapter_subgraph", "chapter_aggregator")
 
     main_graph.add_edge("chapter_aggregator", "document_integrator")
