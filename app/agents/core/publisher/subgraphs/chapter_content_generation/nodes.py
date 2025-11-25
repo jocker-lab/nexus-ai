@@ -37,19 +37,18 @@ class DraftEvaluation(BaseModel):
     """Draft evaluation result"""
     is_satisfied: bool = Field(description="Whether the current draft is satisfactory (True if coverage >= 0.7)")
     coverage_score: float = Field(description="Coverage score (0-1)")
-    missing_content: str = Field(description="Description of what content is missing or needs improvement. Empty string if satisfied.")
+    follow_up_queries: List[str] = Field(default=[], description="Follow-up search queries to fill gaps. Empty list if satisfied.")
 
 
 # ============================================================
-# Node 1: Generate Queries and Dispatch Parallel Search
+# Node 1: Generate Initial Queries (只在第一轮执行)
 # ============================================================
 
 def generate_queries_node(state: ChapterIterativeState) -> Command:
     """
-    Node 1: Generate search queries and dispatch parallel searches
+    Node 1: Generate initial search queries based on chapter outline
 
-    - 第一轮 (missing_content 为空): 根据 chapter 信息生成 3 个 queries
-    - 后续轮 (missing_content 有值): 根据缺失内容生成 1-3 个补充 queries
+    只在第一轮执行，根据 chapter_outline 生成 3 个初始 queries
 
     Output: Command with Send list to search_node
     """
@@ -60,29 +59,16 @@ def generate_queries_node(state: ChapterIterativeState) -> Command:
     content_requirements = getattr(chapter_outline, "content_requirements", "")
     writing_guidance = getattr(chapter_outline, "writing_guidance", "")
 
-    missing_content = state.get("missing_content", "")
-    iteration = state.get("iteration", 0)
-    draft = state.get("draft", "")
-
     llm = ChatDeepSeek(model="deepseek-chat", temperature=0)
     llm_with_structure = llm.with_structured_output(QueryList)
 
-    # 根据 missing_content 选择不同的模板
-    if not missing_content:
-        logger.info(f"  🔍 [Chapter {chapter_id}] Generating initial search queries...")
-        prompt = render_prompt_template(f"{PROMPT_PATH}/generate_queries_initial", {
-            "chapter_title": chapter_title,
-            "chapter_description": chapter_description,
-            "content_requirements": content_requirements,
-            "writing_guidance": writing_guidance,
-        })
-    else:
-        logger.info(f"  🔍 [Chapter {chapter_id}] Generating supplementary queries (iteration {iteration + 1})...")
-        prompt = render_prompt_template(f"{PROMPT_PATH}/generate_queries_supplement", {
-            "chapter_title": chapter_title,
-            "chapter_description": chapter_description,
-            "missing_content": missing_content,
-        })
+    logger.info(f"  🔍 [Chapter {chapter_id}] Generating initial search queries...")
+    prompt = render_prompt_template(f"{PROMPT_PATH}/generate_queries_initial", {
+        "chapter_title": chapter_title,
+        "chapter_description": chapter_description,
+        "content_requirements": content_requirements,
+        "writing_guidance": writing_guidance,
+    })
 
     try:
         result = llm_with_structure.invoke(prompt)
@@ -93,19 +79,14 @@ def generate_queries_node(state: ChapterIterativeState) -> Command:
             logger.info(f"      {i}. {query}")
 
         # Build Send list for parallel search
-        send_list = []
-        for query in queries:
-            send_list.append(Send("search", {
+        send_list = [
+            Send("search", {
                 "chapter_id": chapter_id,
                 "chapter_outline": chapter_outline,
-                "current_query": query,
-                "missing_content": missing_content,
-                "search_results": [],
-                "draft": draft,
-                "iteration": iteration,
-                "is_satisfied": False,
-                "final_content": "",
-            }))
+                "search_query": query,
+            })
+            for query in queries
+        ]
 
         logger.info(f"    ✓ Dispatching {len(send_list)} parallel searches...")
 
@@ -113,19 +94,13 @@ def generate_queries_node(state: ChapterIterativeState) -> Command:
 
     except Exception as e:
         logger.error(f"    ⚠️  Query generation failed: {e}")
-        fallback_query = f"{chapter_title} {content_requirements}" if not missing_content else f"{chapter_title} {missing_content}"
+        fallback_query = f"{chapter_title} {content_requirements}"
         logger.info(f"    ↳ Using fallback query: {fallback_query}")
 
         return Command(goto=[Send("search", {
             "chapter_id": chapter_id,
             "chapter_outline": chapter_outline,
-            "current_query": fallback_query,
-            "missing_content": missing_content,
-            "search_results": [],
-            "draft": draft,
-            "iteration": iteration,
-            "is_satisfied": False,
-            "final_content": "",
+            "search_query": fallback_query,
         })])
 
 
@@ -133,18 +108,18 @@ def generate_queries_node(state: ChapterIterativeState) -> Command:
 # Node 2: Search (Pure Search Node)
 # ============================================================
 
-def search_node(state: ChapterIterativeState) -> Dict[str, Any]:
+def search_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """
     Node 2: Pure search execution (supports parallel execution)
 
-    Input: current_query (passed via Send)
+    Input: search_query (passed via Send)
     Output: search_results (list with single result, aggregated by operator.add)
     """
-    chapter_id = state["chapter_id"]
-    current_query = state.get("current_query", "")
+    chapter_id = state.get("chapter_id", "?")
+    search_query = state.get("search_query", "")
 
     logger.info(f"  🔍 [Chapter {chapter_id}] Searching...")
-    logger.info(f"    Query: {current_query}")
+    logger.info(f"    Query: {search_query}")
 
     try:
         from app.agents.tools.search.tavily_search import searcher
@@ -152,18 +127,18 @@ def search_node(state: ChapterIterativeState) -> Dict[str, Any]:
         logger.error("    ⚠️  Cannot import search tool")
         return {
             "search_results": [{
-                "query": current_query,
-                "content": f"Search tool unavailable. Placeholder content for: {current_query}"
+                "query": search_query,
+                "content": f"Search tool unavailable. Placeholder content for: {search_query}"
             }]
         }
 
     try:
-        search_content = searcher.invoke(current_query, max_results=5)
+        search_content = searcher.invoke(search_query, max_results=5)
         logger.info(f"    ✓ Search completed ({len(search_content)} characters)")
 
         return {
             "search_results": [{
-                "query": current_query,
+                "query": search_query,
                 "content": search_content
             }]
         }
@@ -172,8 +147,8 @@ def search_node(state: ChapterIterativeState) -> Dict[str, Any]:
         logger.error(f"    ⚠️  Search failed: {e}")
         return {
             "search_results": [{
-                "query": current_query,
-                "content": f"Search failed: {str(e)}. Query was: {current_query}"
+                "query": search_query,
+                "content": f"Search failed: {str(e)}. Query was: {search_query}"
             }]
         }
 
@@ -292,10 +267,10 @@ async def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
 
 def evaluate_node(state: ChapterIterativeState) -> Dict[str, Any]:
     """
-    Node 4: Evaluate draft quality
+    Node 4: Evaluate draft quality and generate follow-up queries if needed
 
     Input: draft, chapter_outline
-    Output: is_satisfied, missing_content (str describing what's missing)
+    Output: is_satisfied, follow_up_queries (直接生成后续查询)
     """
     chapter_id = state["chapter_id"]
     chapter_outline = state["chapter_outline"]
@@ -327,12 +302,14 @@ def evaluate_node(state: ChapterIterativeState) -> Dict[str, Any]:
         logger.info(f"    ✓ Coverage score: {result.coverage_score:.2f}")
         logger.info(f"    ✓ Satisfied: {'Yes' if result.is_satisfied else 'No'}")
 
-        if not result.is_satisfied and result.missing_content:
-            logger.info(f"    ↳ Missing: {result.missing_content[:100]}...")
+        if not result.is_satisfied and result.follow_up_queries:
+            logger.info(f"    ↳ Follow-up queries: {len(result.follow_up_queries)}")
+            for i, q in enumerate(result.follow_up_queries, 1):
+                logger.info(f"      {i}. {q}")
 
         return {
             "is_satisfied": result.is_satisfied,
-            "missing_content": result.missing_content if not result.is_satisfied else ""
+            "follow_up_queries": result.follow_up_queries if not result.is_satisfied else []
         }
 
     except Exception as e:
@@ -343,43 +320,48 @@ def evaluate_node(state: ChapterIterativeState) -> Dict[str, Any]:
 
         return {
             "is_satisfied": is_satisfied,
-            "missing_content": "" if is_satisfied else "Unable to evaluate properly, needs general improvement"
+            "follow_up_queries": []
         }
 
 
 # ============================================================
-# Conditional Edge Function
+# Conditional Edge Function (returns Send list or "finalize")
 # ============================================================
 
-def should_continue_iteration(state: ChapterIterativeState) -> str:
+def route_after_evaluate(state: ChapterIterativeState):
     """
-    Conditional edge: determine whether to continue iterating
+    Conditional edge: determine whether to continue or finalize
 
     Rules:
-    1. If satisfied → "finalize"
-    2. If not satisfied but iteration < max_iterations → "continue"
-    3. If iteration >= max_iterations → "finalize" (force stop)
+    1. If is_satisfied=True OR follow_up_queries is empty → "finalize"
+    2. If is_satisfied=False AND follow_up_queries has items → Send to search
+
+    Returns: "finalize" or List[Send]
     """
     chapter_id = state["chapter_id"]
-    iteration = state.get("iteration", 0)
+    chapter_outline = state["chapter_outline"]
     is_satisfied = state.get("is_satisfied", False)
-
-    max_iterations = 3
+    follow_up_queries = state.get("follow_up_queries", [])
 
     logger.info(f"  🔀 [Chapter {chapter_id}] Decision point...")
-    logger.info(f"    ↳ Iteration: {iteration}/{max_iterations}")
     logger.info(f"    ↳ Satisfied: {is_satisfied}")
+    logger.info(f"    ↳ Follow-up queries: {len(follow_up_queries)}")
 
-    if iteration >= max_iterations:
-        logger.info(f"    ✓ Max iterations reached, forcing finalization")
+    # Finalize if satisfied or no follow-up queries
+    if is_satisfied or not follow_up_queries:
+        logger.success(f"    ✓ Finalizing chapter")
         return "finalize"
 
-    if is_satisfied:
-        logger.success(f"    ✓ Draft satisfactory, early termination")
-        return "finalize"
-
-    logger.info(f"    ↳ Continuing to next iteration (back to generate_queries)")
-    return "continue"
+    # Send follow-up queries to search
+    logger.info(f"    ↳ Dispatching {len(follow_up_queries)} follow-up searches...")
+    return [
+        Send("search", {
+            "chapter_id": chapter_id,
+            "chapter_outline": chapter_outline,
+            "search_query": query,
+        })
+        for query in follow_up_queries
+    ]
 
 
 # ============================================================

@@ -67,11 +67,11 @@ async def main():
         "chapter_id": 4,
         "chapter_outline": mock_section,
         # 以下字段会在运行过程中填充
-        "missing_content": "",
         "search_results": [],
         "draft": "",
         "iteration": 0,
         "is_satisfied": False,
+        "follow_up_queries": [],
         "final_content": "",
     }
 
@@ -96,9 +96,10 @@ async def main():
     print(f"  - Final content length: {len(final_state.get('final_content', ''))} characters")
     print(f"  - Charts generated: {final_state.get('final_content', '').count('![')}")
 
-    if final_state.get('missing_content'):
-        print(f"\nLast missing_content (if any):")
-        print(f"  {final_state['missing_content'][:200]}...")
+    if final_state.get('follow_up_queries'):
+        print(f"\nLast follow_up_queries (if any):")
+        for q in final_state['follow_up_queries']:
+            print(f"  - {q}")
 
     print("\n" + "-" * 70)
     print("Final Content Preview (first 1500 chars):")
@@ -108,9 +109,11 @@ async def main():
 
     # 保存完整内容到文件
     import os
-    output_dir = "test_output"
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = f"{output_dir}/chapter_output.md"
+    from pathlib import Path
+    project_root = Path(__file__).parent.parent  # nexus-ai/
+    output_dir = project_root / "test_output"
+    output_dir.mkdir(exist_ok=True)
+    output_path = output_dir / "chapter_output.md"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(final_state.get('final_content', ''))
     print(f"\n📄 Full content saved to: {output_path}")

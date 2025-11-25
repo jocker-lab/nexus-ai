@@ -10,7 +10,7 @@ from app.agents.core.publisher.subgraphs.chapter_content_generation.nodes import
     search_node,
     write_node,
     evaluate_node,
-    should_continue_iteration,
+    route_after_evaluate,
     finalize_node
 )
 
@@ -22,17 +22,17 @@ def create_iterative_chapter_subgraph():
     流程:
         START
           ↓
-        generate_queries (生成 queries，Send 并行搜索)
+        generate_queries (只在第一轮执行，生成初始 queries，Send 并行搜索)
           ↓
         search (并行执行，结果通过 reducer 汇总)
           ↓
         write (基于搜索结果写/完善草稿，清空 search_results)
           ↓
-        evaluate (评估，返回 missing_content)
+        evaluate (评估，返回 is_satisfied + follow_up_queries)
           ↓
-        should_continue (条件边)
-            ├─ "continue" → 回到 generate_queries (根据 missing_content 生成补充 queries)
-            └─ "finalize" → finalize → END
+        route_after_evaluate (条件边)
+            ├─ is_satisfied=True OR follow_up_queries 为空 → finalize → END
+            └─ follow_up_queries 有值 → Send 到 search → write → evaluate → ...
     """
     logger.info("🏗️  构建迭代式章节内容生成 Subgraph")
 
@@ -54,14 +54,13 @@ def create_iterative_chapter_subgraph():
     subgraph.add_edge("search", "write")
     subgraph.add_edge("write", "evaluate")
 
-    # 添加条件边：根据评估结果决定是继续还是结束
+    # 添加条件边：evaluate 后根据结果决定
+    # - 如果满意或无 follow_up_queries → finalize
+    # - 如果不满意且有 follow_up_queries → Send 到 search (跳过 generate_queries)
     subgraph.add_conditional_edges(
         "evaluate",
-        should_continue_iteration,
-        {
-            "continue": "generate_queries",  # 不满意：回到 generate_queries 生成补充 queries
-            "finalize": "finalize"           # 满意或达到最大迭代次数：结束
-        }
+        route_after_evaluate,
+        ["search", "finalize"]  # 可能的目标节点
     )
 
     # 最终边

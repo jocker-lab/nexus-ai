@@ -4,7 +4,7 @@ CURRENT_TIME: {{ CURRENT_TIME }}
 
 # Draft Quality Evaluation
 
-You are a content quality evaluator. Your task is to assess the draft and identify what content is missing.
+You are a content quality evaluator. Your task is to assess the draft and generate follow-up search queries if content is missing.
 
 ---
 
@@ -41,8 +41,8 @@ You are a content quality evaluator. Your task is to assess the draft and identi
 
 ## Satisfaction Threshold
 
-- coverage_score >= 0.70 → is_satisfied = True, missing_content = ""
-- coverage_score < 0.70 → is_satisfied = False, missing_content = description of gaps
+- coverage_score >= 0.70 → is_satisfied = True, follow_up_queries = []
+- coverage_score < 0.70 → is_satisfied = False, follow_up_queries = [1-3 specific search queries]
 
 ---
 
@@ -52,11 +52,13 @@ Evaluate the draft and provide:
 
 1. **is_satisfied** (boolean): Whether the draft meets quality standards
 2. **coverage_score** (0-1): How well the draft covers required content
-3. **missing_content** (string): What content is missing or needs improvement. Empty string if satisfied.
+3. **follow_up_queries** (list of strings): Search queries to find missing content. Empty list if satisfied.
 
-Be specific about what content is missing. For example:
-- "Lacks practical examples of GPU performance benchmarks"
-- "Missing comparison between TPU and GPU architectures"
-- "Needs more depth on energy efficiency trends"
+Generate specific, actionable search queries. For example:
+- "GPU vs TPU performance benchmark comparison 2024"
+- "NVIDIA H100 vs Google TPU v5 specifications"
+- "AI chip energy efficiency trends data"
+
+Each query should target a specific gap in the content. Generate 1-3 queries maximum.
 
 Evaluate now.

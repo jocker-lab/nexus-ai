@@ -23,11 +23,13 @@ class ChapterIterativeState(TypedDict):
     chapter_outline: Any  # Section 对象
 
     # ========== 中间状态 ==========
-    missing_content: str  # 空 = 第一轮; 有值 = evaluate 认为缺少的内容
     search_results: Annotated[List[SearchResult], operator.add]  # 并行搜索汇总，write 后清空
     draft: str
     iteration: int
 
-    # ========== 输出 ==========
+    # ========== evaluate 输出 ==========
     is_satisfied: bool
+    follow_up_queries: List[str]  # evaluate 生成的后续查询，为空表示满意
+
+    # ========== 最终输出 ==========
     final_content: str
