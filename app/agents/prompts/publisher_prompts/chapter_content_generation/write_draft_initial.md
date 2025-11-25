@@ -40,5 +40,20 @@ Write the initial draft for this chapter.
 5. Base content on search results; mark gaps as "【To be supplemented】"
 6. Include source references where applicable
 7. Target approximately {{ target_word_count }} words
+{% if visual_elements %}
+8. **Charts**: Use `generate_chart` tool to create visualizations for key data points, trends, or comparisons
+{% endif %}
+
+{% if visual_elements %}
+## Chart Generation
+
+When appropriate, create charts to visualize:
+- Statistical data and trends
+- Comparisons between different items
+- Distribution or composition data
+- Timeline or progression data
+
+Use the `generate_chart` tool and embed the resulting URL in your content using Markdown image syntax.
+{% endif %}
 
 Output the draft content now.

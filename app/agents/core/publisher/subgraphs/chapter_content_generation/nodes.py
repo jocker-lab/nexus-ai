@@ -6,7 +6,8 @@ from langchain_deepseek import ChatDeepSeek
 from loguru import logger
 from typing import Dict, Any, List
 from langchain.chat_models import init_chat_model
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from pydantic import BaseModel, Field
 from langgraph.types import Send, Command
 
@@ -14,6 +15,8 @@ from app.agents.core.publisher.subgraphs.chapter_content_generation.state import
     ChapterIterativeState,
 )
 from app.agents.prompts.template import render_prompt_template
+from app.agents.tools.generation.chart_generation import generate_chart
+from app.agents.tools.thinking.thinking_tools import think, criticize
 
 load_dotenv()
 
@@ -176,12 +179,12 @@ def search_node(state: ChapterIterativeState) -> Dict[str, Any]:
 
 
 # ============================================================
-# Node 3: Write/Refine Draft
+# Node 3: Write/Refine Draft (Agent with Chart Generation)
 # ============================================================
 
-def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
+async def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
     """
-    Node 3: Write or refine draft
+    Node 3: Write or refine draft using Agent with chart generation capability
 
     Input: search_results (list), draft, iteration, chapter_outline
     Output: updated draft, iteration+1, search_results=[] (清空为下轮准备)
@@ -197,9 +200,13 @@ def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
     description = getattr(chapter_outline, "description", "")
     content_requirements = getattr(chapter_outline, "content_requirements", "")
     writing_guidance = getattr(chapter_outline, "writing_guidance", "")
+    visual_elements = getattr(chapter_outline, "visual_elements", False)
 
     logger.info(f"  ✍️  [Chapter {chapter_id}] Writing draft (iteration {iteration + 1})...")
+    if visual_elements:
+        logger.info(f"    ↳ Chart generation enabled")
 
+    # Initialize LLM
     llm = init_chat_model("deepseek:deepseek-chat")
 
     # Format search results
@@ -209,7 +216,16 @@ def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
     ]) if search_results_list else "No search results available."
 
     # Load system prompt
-    system_prompt = render_prompt_template(f"{PROMPT_PATH}/write_draft_system", {})
+    system_prompt = render_prompt_template(f"{PROMPT_PATH}/write_draft_system", {
+        "visual_elements": visual_elements,
+    })
+
+    # Create Agent with tools
+    agent = create_agent(
+        model=llm,
+        tools=[generate_chart, think, criticize],
+        system_prompt=system_prompt
+    )
 
     # Choose task prompt based on iteration
     if iteration == 0:
@@ -220,6 +236,7 @@ def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
             "writing_guidance": writing_guidance,
             "search_results_text": search_results_text,
             "target_word_count": target_word_count,
+            "visual_elements": visual_elements,
         })
     else:
         user_prompt = render_prompt_template(f"{PROMPT_PATH}/write_draft_refine", {
@@ -229,16 +246,27 @@ def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
             "draft": draft,
             "search_results_text": search_results_text,
             "target_word_count": target_word_count,
+            "visual_elements": visual_elements,
         })
 
     try:
-        response = llm.invoke([
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt)
-        ])
-        new_draft = response.content
+        logger.info(f"    ↳ Starting Agent (with chart generation capability)...")
+
+        response = await agent.ainvoke(
+            {"messages": [{"role": "user", "content": user_prompt}]},
+            config={"recursion_limit": 50}
+        )
+
+        # Extract final content (last AI message)
+        ai_messages = [m for m in response["messages"] if isinstance(m, AIMessage) and m.content]
+
+        if ai_messages:
+            new_draft = ai_messages[-1].content.strip()
+        else:
+            raise ValueError("Agent did not return valid content")
 
         logger.info(f"    ✓ Draft length: {len(new_draft)} characters")
+        logger.info(f"    ✓ Charts generated: {new_draft.count('![')}")
 
         return {
             "draft": new_draft,
@@ -248,6 +276,8 @@ def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"    ⚠️  Writing failed: {e}")
+        import traceback
+        traceback.print_exc()
         fallback_draft = draft if draft else f"# {chapter_title}\n\nWriting failed: {str(e)}"
         return {
             "draft": fallback_draft,
