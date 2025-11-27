@@ -8,7 +8,8 @@
 @License :   (C)Copyright 2025, GienTech Technology Co.,Ltd. All rights reserved.
 @Desc    :   文件描述
 """
-from .chapter_writing_aggregator import chapter_aggregator
-from .chapter_writing_dispatcher import chapter_dispatcher
-from .document_reviewer import document_reviewer
-from .document_integrator import document_integrator
+from app.agents.core.publisher.writing.nodes.chapter_writing_aggregator import chapter_aggregator
+from app.agents.core.publisher.writing.nodes.chapter_writing_dispatcher import chapter_dispatcher
+from app.agents.core.publisher.writing.nodes.document_reviewer import document_reviewer
+from app.agents.core.publisher.writing.nodes.document_integrator import document_integrator
+from app.agents.core.publisher.writing.nodes.store_to_milvus import store_to_milvus

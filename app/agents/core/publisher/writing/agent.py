@@ -14,7 +14,8 @@ from app.agents.core.publisher.writing.nodes import (
     chapter_aggregator,
     chapter_dispatcher,
     document_integrator,
-    document_reviewer
+    document_reviewer,
+    store_to_milvus
 )
 
 from app.agents.core.publisher.subgraphs.chapter_content_generation.agent import create_iterative_chapter_subgraph
@@ -37,6 +38,7 @@ def create_main_graph():
     main_graph.add_node("chapter_aggregator", chapter_aggregator)
     main_graph.add_node("document_integrator", document_integrator)
     main_graph.add_node("document_reviewer", document_reviewer)
+    main_graph.add_node("store_to_milvus", store_to_milvus)
 
     # === 3. 添加 Subgraph ===
     # ⭐ 使用新的迭代式章节生成 Subgraph
@@ -52,7 +54,8 @@ def create_main_graph():
 
     main_graph.add_edge("chapter_aggregator", "document_integrator")
     main_graph.add_edge("document_integrator", "document_reviewer")
-    main_graph.add_edge("document_reviewer", END)
+    main_graph.add_edge("document_reviewer", "store_to_milvus")
+    main_graph.add_edge("store_to_milvus", END)
 
     # === 6. 编译 ===
     compiled_main_graph = main_graph.compile()

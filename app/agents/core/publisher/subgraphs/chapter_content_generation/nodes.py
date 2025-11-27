@@ -285,6 +285,7 @@ def evaluate_node(state: ChapterIterativeState) -> Dict[str, Any]:
     logger.info(f"  📊 [Chapter {chapter_id}] Evaluating draft...")
 
     llm = init_chat_model("deepseek:deepseek-chat")
+
     llm_with_structure = llm.with_structured_output(DraftEvaluation)
 
     eval_prompt = render_prompt_template(f"{PROMPT_PATH}/evaluate_draft", {
@@ -298,6 +299,7 @@ def evaluate_node(state: ChapterIterativeState) -> Dict[str, Any]:
 
     try:
         result = llm_with_structure.invoke(eval_prompt)
+
 
         logger.info(f"    ✓ Coverage score: {result.coverage_score:.2f}")
         logger.info(f"    ✓ Satisfied: {'Yes' if result.is_satisfied else 'No'}")
