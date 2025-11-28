@@ -1,163 +1,114 @@
 # -*- coding: utf-8 -*-
 """
-Document Reviewer - 智能文档审查节点（简化版）
+Document Reviewer - 文档全局审查节点
 
 职责：
-1. 使用 LLM 对整合后的文档进行全局审查
-2. 评估连贯性、完整性、质量
-3. 可选：自动修复轻微问题
+1. 使用 Structured Output 对完整文档进行全局审查
+2. 生成结构化的审查结果（ReviewResult）
+3. 返回 latest_review 供路由决策和 reviser 使用
+
+注意：本节点只负责"审查"，不负责"修订"。
 """
+from datetime import datetime
 from typing import Dict, Any
 from loguru import logger
-from langchain_deepseek import ChatDeepSeek
+from langchain.chat_models import init_chat_model
+from langchain_core.messages import HumanMessage, SystemMessage
 from app.agents.core.publisher.writing.state import DocumentState
-from app.agents.schemas.review_schema import GlobalReviewResult
-from app.agents.core.publisher.writing import config
+from app.agents.schemas.review_schema import ReviewResult
+from app.agents.prompts.template import render_prompt_template
 
 
 async def document_reviewer(state: DocumentState) -> Dict[str, Any]:
     """
-    智能文档审查节点（使用 Structured Output）
+    文档全局审查节点 - 使用 Structured Output
 
-    设计理念：
-    - 简化审查逻辑，只做必要的检查
-    - 使用 Structured Output 确保返回格式
-    - 自动修复轻微问题（可选）
+    Args:
+        state: DocumentState
+
+    Returns:
+        {"latest_review": ReviewResult, "revision_count": int}
     """
-    logger.info("\n🔍 [Document Reviewer] 智能全局审查...")
+    logger.info("\n" + "=" * 60)
+    logger.info("Document Reviewer: 开始全局审查...")
+    logger.info("=" * 60)
 
-    document = state["integrated_document"]
-    total_word_count = state.get("document_metadata", {}).get("total_words", len(document))
-    target_length = state["target_length"]
-    avg_quality = state.get("quality_stats", {}).get("avg_score", 0)
+    document = state["document"]
+    outline = state["document_outline"]
+    metadata = state.get("document_metadata", {})
 
-    # === 初始化 LLM ===
-    llm = ChatDeepSeek(
-        model=config.MODEL_NAME,
-        max_tokens=config.MAX_TOKENS,
-        temperature=config.TEMPERATURE,
+    total_words = metadata.get("total_words", len(document))
+    target_length = outline.estimated_total_words
+    avg_score = metadata.get("avg_score", 0)
+    total_chapters = metadata.get("total_chapters", 0)
+
+    # === 渲染 Prompt ===
+    logger.info("  Preparing review prompts...")
+
+    system_prompt = render_prompt_template(
+        "publisher_prompts/document_writing/document_review_system",
+        {
+            "language": outline.language,
+        }
     )
 
-    # === 1. LLM 全局审查（使用 Structured Output）===
-    logger.info("  ↳ 执行 LLM 智能审查...")
+    user_prompt = render_prompt_template(
+        "publisher_prompts/document_writing/document_review_task",
+        {
+            "CURRENT_TIME": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "title": outline.title,
+            "language": outline.language,
+            "total_words": total_words,
+            "target_length": target_length,
+            "avg_score": avg_score,
+            "writing_style": outline.writing_style,
+            "writing_tone": outline.writing_tone,
+            "target_audience": outline.target_audience,
+            "writing_purpose": outline.writing_purpose,
+            "total_chapters": total_chapters,
+            "document": document,
+        }
+    )
+
+    # === 调用 LLM with Structured Output ===
+    logger.info("  Invoking LLM for structured review...")
+
+    llm = init_chat_model("deepseek:deepseek-chat")
 
     try:
-        llm_with_structure = llm.with_structured_output(GlobalReviewResult)
-
-        # 文档预览（避免 token 过多）
-        doc_preview = document[:5000]
-        if len(document) > 5000:
-            doc_preview += f"\n\n... [中间省略 {len(document) - 5000} 字符] ...\n\n"
-            doc_preview += document[-2000:]  # 添加结尾部分
-
-        # 构建审查 prompt
-        system_prompt = """你是一位资深的文档审查专家。
-
-        任务：对整份文档进行全局质量审查。
-        
-        审查维度：
-        1. **连贯性**：章节之间是否流畅过渡、逻辑是否连贯
-        2. **完整性**：是否缺失重要内容、结构是否完整
-        3. **冗余性**：是否有重复内容
-        4. **术语一致性**：专业术语使用是否统一
-        5. **格式规范**：Markdown 格式是否正确
-        
-        输出要求：
-        - 使用结构化输出格式
-        - overall_assessment: excellent/good/acceptable/needs_revision
-        - coherence_score: 0-100 分
-        - 列出发现的主要问题（如果有）
-        - 给出修订建议（如果需要）
-        """
-
-        user_prompt = f"""请审查以下文档：
-        
-        **文档统计**：
-        - 总字数：{total_word_count} 字（目标：{target_length} 字）
-        - 平均章节质量：{avg_quality} 分
-        
-        **文档内容**：
-        {doc_preview}
-        
-        ---
-        请进行全局审查并返回结构化结果。
-        """
-
         messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_prompt)
         ]
 
-        review_result = await llm_with_structure.ainvoke(messages)
+        structured_llm = llm.with_structured_output(ReviewResult)
+        review_result: ReviewResult = await structured_llm.ainvoke(messages)
 
-        logger.info(f"    ↳ 整体评估: {review_result.overall_assessment}")
-        logger.info(f"    ↳ 连贯性分数: {review_result.coherence_score}")
-
-        if review_result.redundancy_issues:
-            logger.warning(f"    ⚠️  发现 {len(review_result.redundancy_issues)} 个冗余问题")
-
-        if review_result.terminology_issues:
-            logger.warning(f"    ⚠️  发现 {len(review_result.terminology_issues)} 个术语问题")
+        logger.success(
+            f"  Review completed | Score: {review_result.score}/100 | "
+            f"Status: {review_result.status.upper()} | "
+            f"Suggestions: {len(review_result.actionable_suggestions)}"
+        )
+        logger.info(f"  Feedback: {review_result.general_feedback[:100]}...")
 
     except Exception as e:
-        logger.error(f"  ❌ 审查失败: {e}", exc_info=True)
+        logger.error(f"  Review failed: {e}", exc_info=True)
 
-        # 回退：默认通过
-        logger.info("  ↳ 使用默认审查结果（通过）\n")
-
-        review_result = GlobalReviewResult(
-            overall_assessment="acceptable",
-            coherence_score=75,
-            redundancy_issues=[],
-            terminology_issues=[],
-            suggested_fixes=[],
-            recommendation="approve"
+        # 失败时返回保守的默认结果
+        review_result = ReviewResult(
+            status="pass",  # 审查失败时默认通过，避免阻塞流程
+            score=70,
+            general_feedback="【自动审查失败】由于 LLM 调用异常，系统无法完成正常评审。",
+            actionable_suggestions=[],
         )
 
-    # === 2. 决策分支（简化） ===
-    recommendation = review_result.recommendation
-    final_document = document
+    # === 更新状态 ===
+    current_revision_count = state.get("revision_count", 0) + 1
 
-    if recommendation == "approve":
-        logger.success("  ✓ 审查通过，直接输出\n")
+    logger.info(f"  Revision count: {current_revision_count}")
+    logger.info("=" * 60 + "\n")
 
-    elif recommendation == "minor_fixes" and review_result.suggested_fixes:
-        logger.info("  ↳ 需要轻微修复，自动应用...")
-
-        try:
-            # 构建修复 prompt
-            fixes_text = "\n".join([
-                f"- {fix.location}: {fix.description} → {fix.suggested_change}"
-                for fix in review_result.suggested_fixes
-            ])
-
-            fix_prompt = f"""请对以下文档应用这些修复：
-
-            **修复清单**：
-            {fixes_text}
-            
-            **原文档**：
-            {document}
-            
-            ---
-            请输出修复后的完整文档（Markdown 格式）。
-            """
-
-            fix_response = await llm.ainvoke([{"role": "user", "content": fix_prompt}])
-            final_document = fix_response.content.strip()
-
-            logger.success(f"  ✓ 应用了 {len(review_result.suggested_fixes)} 个修复\n")
-
-        except Exception as e:
-            logger.warning(f"  ⚠️  自动修复失败: {e}")
-            logger.info("  ↳ 使用原文档\n")
-
-    else:
-        # major_revision 或其他情况，也直接通过（避免过度审查）
-        logger.info("  ↳ 建议进行修订，但自动通过（避免过度审查）\n")
-
-    # === 返回更新 ===
     return {
-        "global_review": review_result.model_dump(),
-        "final_document": final_document,
+        "latest_review": review_result,
+        "revision_count": current_revision_count,
     }

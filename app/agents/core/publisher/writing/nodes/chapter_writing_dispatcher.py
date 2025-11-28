@@ -24,7 +24,7 @@ def chapter_dispatcher(state: DocumentState) -> Command:
     logger.info("\n🚀 [Chapter Dispatcher] 开始分发章节任务...")
 
     # ✅ 使用 main_document_outline 字段
-    document_outline = state["main_document_outline"]
+    document_outline = state["document_outline"]
     total_chapters = len(document_outline.sections)
 
     logger.info(f"  ↳ 共 {total_chapters} 个章节")
@@ -33,18 +33,14 @@ def chapter_dispatcher(state: DocumentState) -> Command:
     send_list = []
 
     for idx, section in enumerate(document_outline.sections, start=1):
-        # 计算章节目标字数
-        if section.subsections:
-            target_word_count = sum(sub.estimated_word_count for sub in section.subsections)
-        else:
-            target_word_count = section.estimated_words
-
         # 构建符合 ChapterState 的数据
         chapter_input = {
             "chapter_id": idx,
+            "writer_role": state["writer_role"],
+            "writer_profile": state["writer_profile"],
+            "writing_principles": state["writing_principles"],
             "document_outline": document_outline,  # ✅ 传递给 subgraph 时用 document_outline
             "chapter_outline": section,  # ✅ 传递 Section 对象
-            "target_word_count": target_word_count,
         }
 
         send_list.append(Send("chapter_subgraph", chapter_input))

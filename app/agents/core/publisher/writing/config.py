@@ -9,7 +9,7 @@
 
 # ========== LLM 配置 ==========
 MODEL_NAME = "deepseek-chat"
-TEMPERATURE = 0.7
+TEMPERATURE = 0.8
 MAX_TOKENS = 8000
 
 # ========== 质量控制配置 ==========

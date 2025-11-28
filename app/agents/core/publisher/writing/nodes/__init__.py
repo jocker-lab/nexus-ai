@@ -11,4 +11,7 @@
 from .chapter_writing_aggregator import chapter_aggregator
 from .chapter_writing_dispatcher import chapter_dispatcher
 from .document_reviewer import document_reviewer
+from .document_reviser import document_reviser
 from .document_integrator import document_integrator
+from .document_writing_role_builder import role_builder_node
+from .chapter_subgraph_wrapper import chapter_subgraph_wrapper

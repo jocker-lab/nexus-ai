@@ -12,7 +12,7 @@
 import asyncio
 from datetime import datetime
 from loguru import logger
-from app.agents.core.publisher.subgraphs.chapter_writing.agent import create_chapter_subgraph
+from app.agents.core.publisher.subgraphs.section_writer.agent import create_chapter_subgraph
 from app.agents.schemas.document_outline_schema import DocumentOutline, Section, SubSection
 from dotenv import load_dotenv
 
@@ -646,7 +646,16 @@ def create_test_state():
         "chapter_id": 1,
         "document_outline": document_outline,
         "chapter_outline": chapter_outline,
-        "target_word_count": chapter_outline.estimated_words,
+        # Writer 角色相关字段
+        "writer_role": "技术分析师",
+        "writer_profile": "资深AI技术分析师，拥有10年以上技术研究和报告撰写经验，擅长将复杂技术概念转化为易懂的商业洞察",
+        "writing_principles": [
+            "保持客观中立的分析立场",
+            "数据驱动，论点有据可查",
+            "技术术语配以通俗解释",
+            "结构清晰，层次分明",
+            "注重实用性和可操作性"
+        ],
         # 可选字段
         # "output_dir": "./test_output",  # 如果需要保存文件可以启用
     }
@@ -668,7 +677,6 @@ async def test_chapter_writing_subgraph():
     initial_state = create_test_state()
     logger.info(f"   ✓ 章节ID: {initial_state['chapter_id']}")
     logger.info(f"   ✓ 章节标题: {initial_state['chapter_outline'].title}")
-    logger.info(f"   ✓ 目标字数: {initial_state['target_word_count']}")
     logger.info(f"   ✓ 子章节数: {len(initial_state['chapter_outline'].subsections)}\n")
 
     # 2. 创建 Subgraph
@@ -682,7 +690,7 @@ async def test_chapter_writing_subgraph():
 
     # 3. 执行 Subgraph
     logger.info("🚀 步骤 3/3: 执行 Chapter Writing 流程...")
-    logger.info("   节点执行顺序: researcher_prompts → writer → reviewer → [decision] → finalizer\n")
+    logger.info("   节点执行顺序: researcher → writer → reviewer → [decision] → reviser/finalizer\n")
 
     try:
         # 异步调用
@@ -695,36 +703,31 @@ async def test_chapter_writing_subgraph():
         # 4. 验证结果
         logger.info("📊 执行结果验证:")
 
-        # 检查必须的字段
-        assert "completed_chapters" in result, "缺少 completed_chapters 字段"
-        assert 1 in result["completed_chapters"], "completed_chapters 中缺少 chapter_id=1"
+        # 检查必须的字段（基于新的 ChapterState 结构）
+        assert "final_chapter_output" in result, "缺少 final_chapter_output 字段"
+        assert "draft" in result, "缺少 draft 字段"
+        assert "latest_review" in result, "缺少 latest_review 字段"
 
-        chapter_result = result["completed_chapters"][1]
-
-        # 验证章节结果结构
-        required_fields = ["chapter_id", "final_content", "actual_word_count", "quality_score"]
-        for field in required_fields:
-            assert field in chapter_result, f"章节结果缺少字段: {field}"
+        # 获取关键数据
+        final_content = result["final_chapter_output"]
+        latest_review = result["latest_review"]
+        revision_count = result.get("revision_count", 0)
 
         # 打印关键指标
-        logger.info(f"   ✓ 章节ID: {chapter_result['chapter_id']}")
-        logger.info(f"   ✓ 最终字数: {chapter_result['actual_word_count']}")
-        logger.info(f"   ✓ 质量评分: {chapter_result['quality_score']}/100")
-        logger.info(f"   ✓ 修订次数: {chapter_result['revision_count']}")
+        logger.info(f"   ✓ 章节ID: {result['chapter_id']}")
+        logger.info(f"   ✓ 最终字数: {len(final_content)}")
+        logger.info(f"   ✓ 质量评分: {latest_review.score}/100")
+        logger.info(f"   ✓ 审查状态: {latest_review.status}")
+        logger.info(f"   ✓ 修订次数: {revision_count}")
 
         # 打印内容预览
-        content_preview = chapter_result['final_content'][:200].replace('\n', ' ')
+        content_preview = final_content[:200].replace('\n', ' ') if final_content else "无内容"
         logger.info(f"   ✓ 内容预览: {content_preview}...")
 
-        # 检查修订历史
-        if "revision_history" in result and result["revision_history"]:
-            logger.info(f"   ✓ 修订历史记录: {len(result['revision_history'])} 条")
-            for i, review in enumerate(result["revision_history"], 1):
-                logger.info(f"      - 第{i}次评审: 评分 {review.overall_score}/100")
-
-        # 检查是否保存了文件
-        if "saved_file_path" in chapter_result:
-            logger.info(f"   ✓ 已保存文件: {chapter_result['saved_file_path']}")
+        # 打印审查反馈
+        logger.info(f"   ✓ 审查反馈: {latest_review.general_feedback[:100]}...")
+        if latest_review.actionable_suggestions:
+            logger.info(f"   ✓ 修改建议数: {len(latest_review.actionable_suggestions)}")
 
         logger.info("\n" + "=" * 70)
         logger.success("🎉 所有测试通过！Chapter Writing Subgraph 运行正常")
@@ -749,12 +752,14 @@ async def test_individual_nodes():
     logger.info("🔍 节点独立测试（可选）")
     logger.info("=" * 70 + "\n")
 
-    from app.agents.core.publisher.subgraphs.chapter_writing.nodes import (
+    from app.agents.core.publisher.subgraphs.section_writer.nodes import (
         chapter_researcher,
         chapter_content_writer,
-        chapter_reviewer,
-        chapter_finalizer
+        review_draft,
+        chapter_finalizer,
+        revise_draft
     )
+    from app.agents.schemas.review_schema import ReviewResult
 
     initial_state = create_test_state()
 
@@ -762,67 +767,79 @@ async def test_individual_nodes():
     logger.info("1️⃣ 测试 chapter_researcher...")
     try:
         researcher_result = await chapter_researcher(initial_state)
-        assert "synthesized_materials" in researcher_result
-        logger.success(f"   ✓ Researcher 测试通过 (素材长度: {len(researcher_result['synthesized_materials'])})")
+        assert "research_data" in researcher_result or "research_queries" in researcher_result
+        logger.success(f"   ✓ Researcher 测试通过")
     except Exception as e:
         logger.error(f"   ✗ Researcher 测试失败: {e}")
 
-    # 测试 2: Writer（需要 researcher_prompts 的输出）
+    # 测试 2: Writer（需要 researcher 的输出）
     logger.info("2️⃣ 测试 chapter_content_writer...")
     try:
-        # 模拟 researcher_prompts 输出
-        writer_state = {**initial_state, "synthesized_materials": "测试素材内容"}
+        # 模拟 researcher 输出
+        writer_state = {**initial_state, "research_data": "测试研究素材内容"}
         writer_result = await chapter_content_writer(writer_state)
-        assert "draft_content" in writer_result
-        assert "word_count" in writer_result
-        logger.success(f"   ✓ Writer 测试通过 (字数: {writer_result['word_count']})")
+        assert "draft" in writer_result or "draft_content" in writer_result
+        logger.success(f"   ✓ Writer 测试通过")
     except Exception as e:
         logger.error(f"   ✗ Writer 测试失败: {e}")
 
     # 测试 3: Reviewer（需要 writer 的输出）
-    logger.info("3️⃣ 测试 chapter_reviewer...")
+    logger.info("3️⃣ 测试 review_draft...")
     try:
         # 模拟 writer 输出
         reviewer_state = {
             **initial_state,
-            "draft_content": "# 测试章节\n\n这是一段测试内容。" * 100,
-            "word_count": 1000,
+            "draft": "# 测试章节\n\n这是一段测试内容。" * 100,
             "revision_count": 0
         }
-        reviewer_result = await chapter_reviewer(reviewer_state)
-        assert "review_result" in reviewer_result
-        assert "revision_needed" in reviewer_result
-        logger.success(f"   ✓ Reviewer 测试通过 (评分: {reviewer_result['review_result'].overall_score})")
+        reviewer_result = await review_draft(reviewer_state)
+        assert "latest_review" in reviewer_result
+        assert "revision_count" in reviewer_result
+        logger.success(f"   ✓ Reviewer 测试通过 (评分: {reviewer_result['latest_review'].score})")
     except Exception as e:
         logger.error(f"   ✗ Reviewer 测试失败: {e}")
 
-    # 测试 4: Finalizer（需要完整的状态）
-    logger.info("4️⃣ 测试 chapter_finalizer...")
+    # 测试 4: Reviser（需要 reviewer 的输出）
+    logger.info("4️⃣ 测试 revise_draft...")
     try:
-        from app.agents.schemas.review_schema import ChapterReviewResult, DimensionScore
+        # 模拟需要修订的状态
+        reviser_state = {
+            **initial_state,
+            "draft": "# 测试章节\n\n这是一段需要修订的内容。",
+            "revision_count": 1,
+            "latest_review": ReviewResult(
+                status="revise",
+                score=70,
+                general_feedback="内容需要补充更多细节",
+                actionable_suggestions=[
+                    "补充关于技术细节的描述",
+                    "增加具体案例说明"
+                ]
+            )
+        }
+        reviser_result = await revise_draft(reviser_state)
+        assert "draft" in reviser_result
+        logger.success(f"   ✓ Reviser 测试通过 (修订后字数: {len(reviser_result['draft'])})")
+    except Exception as e:
+        logger.error(f"   ✗ Reviser 测试失败: {e}")
 
+    # 测试 5: Finalizer（需要完整的状态）
+    logger.info("5️⃣ 测试 chapter_finalizer...")
+    try:
         # 模拟完整状态
         finalizer_state = {
             **initial_state,
-            "draft_content": "# 测试章节\n\n这是最终内容。",
-            "word_count": 1000,
+            "draft": "# 测试章节\n\n这是最终内容。",
             "revision_count": 1,
-            "review_result": ChapterReviewResult(
-                overall_score=85,
-                dimensions={
-                    "content_coverage": DimensionScore(score=85, assessment="good"),
-                    "content_depth": DimensionScore(score=85, assessment="good"),
-                    "structure_logic": DimensionScore(score=85, assessment="good"),
-                    "language_quality": DimensionScore(score=85, assessment="good"),
-                    "format": DimensionScore(score=90, assessment="excellent"),
-                    "length": DimensionScore(score=80, assessment="good"),
-                },
-                issues=[],
-                summary="测试通过"
+            "latest_review": ReviewResult(
+                status="pass",
+                score=88,
+                general_feedback="内容质量良好，符合要求",
+                actionable_suggestions=[]
             )
         }
         finalizer_result = await chapter_finalizer(finalizer_state)
-        assert "completed_chapters" in finalizer_result
+        assert "final_chapter_output" in finalizer_result
         logger.success("   ✓ Finalizer 测试通过")
     except Exception as e:
         logger.error(f"   ✗ Finalizer 测试失败: {e}")
