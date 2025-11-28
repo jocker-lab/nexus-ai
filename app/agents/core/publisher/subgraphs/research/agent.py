@@ -13,7 +13,7 @@ from typing import List
 from langgraph.graph import StateGraph, START, END
 
 from app.agents.core.publisher.subgraphs.research.nodes import (
-    dispatch_research_tasks,
+    plan_research,
     execute_single_research_node,
     aggregate_results
 )
@@ -33,15 +33,15 @@ def build_research_subgraph():
     workflow = StateGraph(ResearcherState)
 
     # 添加节点
-    workflow.add_node("dispatch", dispatch_research_tasks)
+    workflow.add_node("plan_research", plan_research)
     workflow.add_node("execute_single_research", execute_single_research_node)
     workflow.add_node("aggregate", aggregate_results)
 
     # 定义边
-    workflow.add_edge(START, "dispatch")
-    # dispatch 使用 Command(goto=sends)，LangGraph 会自动处理
+    workflow.add_edge(START, "plan_research")
     workflow.add_edge("execute_single_research", "aggregate")
     workflow.add_edge("aggregate", END)
+    # dispatch 使用 Command(goto=sends)，LangGraph 会自动处理
 
     logger.success("✅ Research Subgraph 构建完成")
 
@@ -71,4 +71,4 @@ async def run_research_subgraph(topics: List[str], need_search: bool, language: 
 
     result = await subgraph.ainvoke(initial_state)
 
-    return result.get("final_result", "No results generated")
+    return result.get("research_draft", "No results generated")

@@ -10,7 +10,6 @@
 """
 
 import asyncio
-from typing import Dict, Any
 from loguru import logger
 
 from app.agents.schemas.document_outline_schema import DocumentOutline, Section, SubSection
@@ -139,19 +138,7 @@ async def test_document_writing_graph():
     initial_state: DocumentState = {
         "chat_id": "test-chat-001",
         "document_id": "test-doc-001",
-        "main_document_outline": document_outline,  # ✅ 使用 main_document_outline
-        "global_context": document_outline.writing_purpose,
-        "global_glossary": {},
-        "chapter_configs": [],  # ✅ 不再需要，dispatcher 直接从 main_document_outline 提取
-        "target_length": target_length,
-        "completed_chapters": {},
-        "quality_stats": {},
-        "warnings": [],
-        "integrated_document": "",
-        "document_metadata": {},
-        "global_review": {},
-        "final_document": "",
-        "generation_time": 0.0,
+        "document_outline": document_outline,
     }
 
     logger.info("  ✓ 初始状态创建完成\n")
@@ -201,29 +188,29 @@ async def test_document_writing_graph():
         actual_chapter_ids = set(completed_chapters.keys())
         assert expected_chapter_ids == actual_chapter_ids, f"章节ID不匹配: 期望 {expected_chapter_ids}, 实际 {actual_chapter_ids}"
 
-        # 检查 quality_stats
-        assert "quality_stats" in result, "缺少 quality_stats"
-        quality_stats = result["quality_stats"]
-        logger.info(f"  ✓ 总字数: {quality_stats.get('total_words', 0)}")
-        logger.info(f"  ✓ 平均质量分: {quality_stats.get('avg_score', 0)}")
+        # 检查每个章节的结构
+        for ch_id, ch_data in completed_chapters.items():
+            assert "content" in ch_data, f"章节 {ch_id} 缺少 content"
+            assert "metadata" in ch_data, f"章节 {ch_id} 缺少 metadata"
+            logger.info(f"  ✓ 章节 {ch_id}: {len(ch_data['content'])} 字符, 评分: {ch_data['metadata'].get('final_score', 'N/A')}")
 
-        # 检查 integrated_document
-        assert "integrated_document" in result, "缺少 integrated_document"
-        integrated_doc = result["integrated_document"]
-        assert len(integrated_doc) > 0, "integrated_document 为空"
-        logger.info(f"  ✓ 整合文档长度: {len(integrated_doc)} 字符")
+        # 检查 document_metadata
+        assert "document_metadata" in result, "缺少 document_metadata"
+        metadata = result["document_metadata"]
+        logger.info(f"  ✓ 总字数: {metadata.get('total_words', 0)}")
+        logger.info(f"  ✓ 平均评分: {metadata.get('avg_score', 0)}")
 
-        # 检查 final_document
-        assert "final_document" in result, "缺少 final_document"
-        final_doc = result["final_document"]
-        assert len(final_doc) > 0, "final_document 为空"
-        logger.info(f"  ✓ 最终文档长度: {len(final_doc)} 字符")
+        # 检查 document (整合后文档)
+        assert "document" in result, "缺少 document"
+        document = result["document"]
+        assert len(document) > 0, "document 为空"
+        logger.info(f"  ✓ 最终文档长度: {len(document)} 字符")
 
-        # 检查 global_review
-        assert "global_review" in result, "缺少 global_review"
-        global_review = result["global_review"]
-        logger.info(f"  ✓ 全局审查评估: {global_review.get('overall_assessment', 'N/A')}")
-        logger.info(f"  ✓ 连贯性分数: {global_review.get('coherence_score', 0)}")
+        # 检查 document_review
+        assert "document_review" in result, "缺少 document_review"
+        review = result["document_review"]
+        logger.info(f"  ✓ 审查状态: {review.get('status', 'N/A')}")
+        logger.info(f"  ✓ 整体评估: {review.get('overall_assessment', 'N/A')}")
 
         logger.info("\n" + "="*80)
         logger.success("✅ 所有测试通过！")
@@ -232,7 +219,7 @@ async def test_document_writing_graph():
         # === 6. 输出最终文档预览 ===
         logger.info("📄 最终文档预览 (前500字符):\n")
         logger.info("-"*80)
-        logger.info(final_doc[:500] + "...\n")
+        logger.info(document[:500] + "...\n")
         logger.info("-"*80 + "\n")
 
         return result
@@ -266,19 +253,14 @@ async def test_individual_nodes():
     base_state: DocumentState = {
         "chat_id": "test-chat-002",
         "document_id": "test-doc-002",
-        "main_document_outline": document_outline,  # ✅ 使用 main_document_outline
-        "global_context": document_outline.writing_purpose,
-        "global_glossary": {},
-        "chapter_configs": [],  # ✅ 不再需要
-        "target_length": document_outline.estimated_total_words,
+        "document_outline": document_outline,
+        "writer_role": "技术分析师",
+        "writer_profile": "专注于AI和科技领域的资深分析师",
+        "writing_principles": ["准确性", "客观性", "前瞻性"],
         "completed_chapters": {},
-        "quality_stats": {},
-        "warnings": [],
-        "integrated_document": "",
         "document_metadata": {},
-        "global_review": {},
-        "final_document": "",
-        "generation_time": 0.0,
+        "document_review": {},
+        "document": "",
     }
 
     # === 测试 1: chapter_dispatcher ===
@@ -291,65 +273,76 @@ async def test_individual_nodes():
         logger.error(f"  ❌ chapter_dispatcher 测试失败: {e}\n")
 
     # === 测试 2: chapter_aggregator ===
-    # 注意：需要先有 completed_chapters
     logger.info("🧪 测试 chapter_aggregator...")
     try:
-        # 模拟已完成的章节
+        # 模拟已完成的章节 (新结构，字段名与 merger_node 一致)
         aggregator_state = {
             **base_state,
             "completed_chapters": {
                 1: {
-                    "chapter_id": 1,
-                    "final_content": "# 第一章\n\n这是测试内容...",
-                    "actual_word_count": 1200,
-                    "sources": ["source1.com", "source2.com"],
-                    "quality_score": 85,
-                    "revision_count": 1,
-                    "metadata": {"chapter_title": "第一章"},
+                    "content": "# 第一章\n\n这是测试内容...",
+                    "metadata": {
+                        "chapter_id": 1,
+                        "chapter_title": "第一章",
+                        "word_count": 1200,
+                        "revision_count": 1,
+                        "final_score": 85,
+                        "final_status": "pass",
+                        "writer_role": "技术分析师",
+                    }
                 },
                 2: {
-                    "chapter_id": 2,
-                    "final_content": "# 第二章\n\n这是测试内容...",
-                    "actual_word_count": 1300,
-                    "sources": ["source3.com"],
-                    "quality_score": 88,
-                    "revision_count": 0,
-                    "metadata": {"chapter_title": "第二章"},
+                    "content": "# 第二章\n\n这是测试内容...",
+                    "metadata": {
+                        "chapter_id": 2,
+                        "chapter_title": "第二章",
+                        "word_count": 1300,
+                        "revision_count": 0,
+                        "final_score": 88,
+                        "final_status": "pass",
+                        "writer_role": "技术分析师",
+                    }
                 }
             }
         }
 
         aggregator_result = chapter_aggregator(aggregator_state)
-        logger.info(f"  ✓ aggregator 返回质量统计: {aggregator_result.get('quality_stats')}")
+        logger.info(f"  ✓ aggregator 返回 document_metadata: {aggregator_result.get('document_metadata')}")
         logger.success("  ✓ chapter_aggregator 测试通过\n")
     except Exception as e:
         logger.error(f"  ❌ chapter_aggregator 测试失败: {e}\n")
+        aggregator_result = {}
 
     # === 测试 3: document_integrator ===
     logger.info("🧪 测试 document_integrator...")
     try:
         integrator_state = {
             **aggregator_state,
-            "quality_stats": aggregator_result.get("quality_stats", {}),
+            "document_metadata": aggregator_result.get("document_metadata", {}),
         }
 
         integrator_result = await document_integrator(integrator_state)
-        logger.info(f"  ✓ integrator 返回文档长度: {len(integrator_result.get('integrated_document', ''))}")
+        logger.info(f"  ✓ integrator 返回文档长度: {len(integrator_result.get('document', ''))}")
         logger.success("  ✓ document_integrator 测试通过\n")
     except Exception as e:
         logger.error(f"  ❌ document_integrator 测试失败: {e}\n")
+        integrator_result = {}
 
     # === 测试 4: document_reviewer ===
     logger.info("🧪 测试 document_reviewer...")
     try:
         reviewer_state = {
             **integrator_state,
-            "integrated_document": integrator_result.get("integrated_document", ""),
-            "document_metadata": integrator_result.get("document_metadata", {}),
+            "document": integrator_result.get("document", "# 测试文档\n\n这是测试内容..."),
         }
 
         reviewer_result = await document_reviewer(reviewer_state)
-        logger.info(f"  ✓ reviewer 返回审查结果: {reviewer_result.get('global_review', {}).get('overall_assessment')}")
+        latest_review = reviewer_result.get('latest_review')
+        if latest_review:
+            logger.info(f"  ✓ reviewer 返回审查状态: {latest_review.status}")
+            logger.info(f"  ✓ reviewer 返回评分: {latest_review.score}")
+            logger.info(f"  ✓ reviewer 返回建议数: {len(latest_review.actionable_suggestions)}")
+        logger.info(f"  ✓ reviewer 修订次数: {reviewer_result.get('revision_count')}")
         logger.success("  ✓ document_reviewer 测试通过\n")
     except Exception as e:
         logger.error(f"  ❌ document_reviewer 测试失败: {e}\n")

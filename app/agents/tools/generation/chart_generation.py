@@ -35,7 +35,7 @@ def get_sandbox():
 
 
 @tool
-def generate_chart(code: str, report_id: str = None) -> str:
+def generate_chart(code: str, report_id: str = None) -> dict:
     """
     在安全的 Docker 容器中执行绘图代码并上传到 MinIO。
 
@@ -51,6 +51,7 @@ def generate_chart(code: str, report_id: str = None) -> str:
         import matplotlib.pyplot as plt
         import seaborn as sns
         import pandas as pd
+        import numpy as np
         import base64
         from io import BytesIO
 
@@ -132,4 +133,4 @@ def generate_chart(code: str, report_id: str = None) -> str:
         raise Exception(f"MinIO 上传失败: {e}")
 
     print(f"✅ 图表已上传: {minio_url}")
-    return minio_url
+    return {"image_url": minio_url}

@@ -42,7 +42,7 @@ def render_prompt_template(prompt_name: str, context: Dict[str, Any], add_timest
 
     Args:
         prompt_name: 模板名称（不含 .md 扩展名）
-                     支持子目录路径，如 "chapter_writing/writer_system"
+                     支持子目录路径，如 "section_writer/writer_system"
         context: 模板变量的字典，用于填充 Jinja2 模板中的 {{ variable }}
         add_timestamp: 是否自动添加 CURRENT_TIME 变量（默认 True）
 

@@ -109,61 +109,15 @@ Writing guidance: {{ subsec.writing_guidance }}
 
 ## Research Materials
 
-{% if synthesized_materials %}
+{% if research_data %}
 The following research materials have been collected for this chapter. When using them:
 1. Cite selectively, avoid info dumping
 2. Integrate into argumentative logic
 3. Maintain objectivity
 
-{{ synthesized_materials }}
+{{ research_data }}
 {% else %}
 No research materials available. Create content based on chapter requirements.
-{% endif %}
-
----
-
-{% if revision_needed and draft_content %}
-## Revision Task
-
-### Revision Information
-
-- Current Version: Draft {{ revision_count + 1 }}
-- Previous Draft Word Count: {{ word_count }} words
-- Target Word Count: {{ target_word_count }} words
-- Overall Score: {{ review_result.overall_score }}/100
-
-### Review Summary
-
-{{ review_result.summary }}
-
-{% if review_result.issues and review_result.issues|length > 0 %}
-### Issues and Improvement Suggestions
-
-{% for issue in review_result.issues %}
-**Issue {{ loop.index }}**: {% if issue.location %}{{ issue.location }}{% else %}Overall{% endif %}
-
-Problem: {{ issue.problem }}
-
-Suggested Fix: {{ issue.fix }}
-
-{% endfor %}
-{% endif %}
-
-### Current Draft
-
-```markdown
-{{ draft_content }}
-```
-
-### Revision Requirements
-
-Address the above issues while preserving strengths of the original draft:
-- Ensure revised content meets word count target
-- Maintain consistency with overall document style
-- Improve content quality and depth
-
----
-
 {% endif %}
 
 ## Writing Requirements
@@ -172,7 +126,7 @@ Complete the chapter {% if revision_needed %}revision{% else %}writing{% endif %
 
 ### Must Satisfy
 
-1. **Word Count**: MUST be between {{ (target_word_count * 0.9)|int }} and {{ (target_word_count * 1.1)|int }} words (target: {{ target_word_count }})
+1. **Word Count**: MUST be between {{ (chapter_outline.estimated_words * 0.9)|int }} and {{ (chapter_outline.estimated_words * 1.1)|int }} words (target: {{ target_word_count }})
    - Exceeding this range will result in a low review score
    - Balance quality with strict length compliance
 2. **Style**: {{ document_outline.writing_style }} style with {{ document_outline.writing_tone }} tone
@@ -199,16 +153,3 @@ Complete the chapter {% if revision_needed %}revision{% else %}writing{% endif %
 - Ensure facts and data are accurate
 - Content must be original, avoid plagiarism
 - Smooth transitions with preceding and following chapters
-
-### Output Format
-
-- Use Markdown format
-- Appropriate use of heading levels (##, ###)
-- Use lists, tables, bold, italics, and other formatting as needed
-{% if chapter_outline.visual_elements %}
-- Charts use Markdown image syntax: `![Chart Description](chart_path)`
-{% endif %}
-
----
-
-Begin writing.
