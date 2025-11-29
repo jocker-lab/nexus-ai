@@ -24,10 +24,8 @@
 - **sections**: 章节结构列表，每个章节包含：
   - title: 章节标题
   - description: 该章节的目的和内容范围
-  - estimated_words: 建议字数
+  - estimated_percentage: 该章节占总字数的百分比（如 0.2 表示 20%，所有章节的百分比之和应为 1.0）
   - key_points: 该章节应覆盖的关键要点
-
-- **estimated_total_words**: 整个模版的建议总字数
 
 ### 4. 特殊要求（可选）
 - **special_requirements**: 如有特殊格式要求或必须包含的内容，请说明

@@ -25,9 +25,9 @@ class TemplateSection(BaseModel):
         )
     )
 
-    estimated_words: int = Field(
-        default=500,
-        description="该章节的建议字数"
+    estimated_percentage: float = Field(
+        default=0.1,
+        description="该章节占总字数的百分比，如 0.2 表示 20%"
     )
 
     key_points: List[str] = Field(
@@ -108,11 +108,6 @@ class TemplateOutline(BaseModel):
     sections: List[TemplateSection] = Field(
         ...,
         description="模版的章节结构列表"
-    )
-
-    estimated_total_words: int = Field(
-        default=5000,
-        description="模版建议的总字数"
     )
 
     # ========== 可选信息 ==========

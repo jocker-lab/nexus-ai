@@ -129,7 +129,7 @@ async def upload_template(
             {
                 "title": s.title,
                 "description": s.description,
-                "estimated_words": s.estimated_words,
+                "estimated_percentage": s.estimated_percentage,
                 "key_points": s.key_points,
             }
             for s in outline_result.sections
@@ -147,7 +147,6 @@ async def upload_template(
             writing_tone=outline_result.writing_tone,
             target_audience=outline_result.target_audience,
             sections=sections_data,
-            estimated_total_words=outline_result.estimated_total_words,
             special_requirements=outline_result.special_requirements,
         )
 
@@ -233,8 +232,7 @@ async def search_templates(
                 "writing_style": t.writing_style,
                 "writing_tone": t.writing_tone,
                 "target_audience": t.target_audience,
-                "sections": t.sections,
-                "estimated_total_words": t.estimated_total_words,
+                "sections": t.sections,  # 每个章节包含 estimated_percentage
                 "special_requirements": t.special_requirements,
                 "similarity_score": score_map.get(t.id, 0),
             })

@@ -33,8 +33,7 @@ class Template(Base):
     target_audience = Column(Text)  # 目标读者
 
     # ========== 结构信息 ==========
-    sections = Column(JSON)  # 章节结构 JSON
-    estimated_total_words = Column(Integer, default=5000)  # 建议总字数
+    sections = Column(JSON)  # 章节结构 JSON（每个章节包含 estimated_percentage）
     special_requirements = Column(Text)  # 特殊要求
 
     # ========== 时间戳 ==========

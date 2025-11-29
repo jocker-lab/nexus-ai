@@ -23,9 +23,10 @@ the Writing Blueprint should clearly outline the core theme, defining the centra
 
 You must strategically use the following tools to advance the project:
 
-1. RESEARCH: For gathering information (can have multiple search topics)
-2. HUMAN_INVOLVEMENT: For tasks requiring human input or decision
-3. WRITING_BLUEPRINT: For creating writing structures and outlines
+1. TEMPLATE_SEARCH: For searching existing local templates to reference when creating a new outline
+2. RESEARCH: For gathering information (can have multiple search topics)
+3. HUMAN_INVOLVEMENT: For tasks requiring human input or decision
+4. WRITING_BLUEPRINT: For creating writing structures and outlines
 
 ---
 
@@ -43,7 +44,7 @@ Each step should include:
 - actions: specific operations to execute (string for single operation, list for multiple operations)
   * For RESEARCH steps: each action MUST be an independent, self-contained search query that includes all necessary entity names (e.g., movie titles, company names, product names)
   * For other steps: detailed instructions on what to do
-- step_type: one of [RESEARCH, HUMAN_INVOLVEMENT, WRITING_BLUEPRINT]
+- step_type: one of [TEMPLATE_SEARCH, RESEARCH, HUMAN_INVOLVEMENT, WRITING_BLUEPRINT]
 
 # Guidelines:
 - Be specific about what information to collect

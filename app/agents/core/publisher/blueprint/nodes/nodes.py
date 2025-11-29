@@ -24,6 +24,157 @@ from app.agents.prompts.publisher_prompts.planner.replanner_prompt import replan
 from app.agents.prompts.template import apply_prompt_template
 
 
+# ==================== 模版搜索执行节点 ====================
+
+async def execute_template_search_node(state: PlanExecuteState):
+    """
+    🔍 模版搜索执行节点：根据用户需求语义搜索匹配的模版
+
+    作为 StepType.TEMPLATE_SEARCH 的执行节点，与其他执行节点（research、human_involvement）同级
+
+    流程：
+    1. 从 pending_steps 获取当前步骤
+    2. 从用户消息中提取需求
+    3. 调用 search_templates 进行语义搜索
+    4. 返回搜索结果（模版列表），存入 completed_steps
+    5. 如果找到多个模版，Planner 可以规划后续的 HUMAN_INVOLVEMENT 让用户选择
+
+    返回：
+    - pending_steps: 移除当前步骤后的剩余步骤
+    - completed_steps: 添加当前步骤的执行记录
+    - matched_template: 如果只找到一个高相似度模版，直接设置；否则为 None
+    """
+    logger.info("=" * 60)
+    logger.info("🔍 [TEMPLATE SEARCH NODE] 节点启动")
+    logger.info("=" * 60)
+
+    from app.service.template_service import search_templates
+
+    pending_steps = state.get("pending_steps", [])
+
+    if not pending_steps:
+        logger.warning("⚠️  [TEMPLATE SEARCH NODE] 没有待执行的步骤")
+        return {"pending_steps": []}
+
+    # 获取当前步骤
+    current_step = pending_steps[0]
+    remaining_steps = pending_steps[1:]
+
+    logger.info(f"📌 [TEMPLATE SEARCH NODE] 当前任务: {current_step.target}")
+
+    # 提取用户需求文本（从 actions 或 conversation_messages）
+    search_query = ""
+    if isinstance(current_step.actions, str):
+        search_query = current_step.actions
+    elif isinstance(current_step.actions, list) and current_step.actions:
+        search_query = current_step.actions[0]
+
+    # 如果 actions 为空，从对话消息中提取
+    if not search_query:
+        conversation_messages = state.get("conversation_messages", [])
+        for msg in conversation_messages:
+            if hasattr(msg, 'content') and hasattr(msg, 'type') and msg.type == 'human':
+                search_query = msg.content
+                break
+            elif hasattr(msg, 'content') and not hasattr(msg, 'type'):
+                search_query = msg.content
+                break
+
+    if not search_query:
+        logger.warning("⚠️  [TEMPLATE SEARCH NODE] 未找到搜索查询，跳过模版搜索")
+        execution = StepExecution(
+            step=current_step,
+            execution_res="未找到搜索查询，跳过模版搜索",
+            status="skipped"
+        )
+        return {
+            "pending_steps": remaining_steps,
+            "completed_steps": [execution],
+            "matched_template": None
+        }
+
+    logger.info(f"   📝 搜索查询: {search_query[:100]}{'...' if len(search_query) > 100 else ''}")
+
+    # 搜索模版
+    logger.info("   🔎 正在搜索匹配模版...")
+    try:
+        templates = await search_templates(
+            query_text=search_query,
+            top_k=5,
+            threshold=0.5  # 相似度阈值
+        )
+    except Exception as e:
+        logger.error(f"   ❌ 模版搜索失败: {e}")
+        execution = StepExecution(
+            step=current_step,
+            execution_res=f"模版搜索失败: {str(e)}",
+            status="failed"
+        )
+        return {
+            "pending_steps": remaining_steps,
+            "completed_steps": [execution],
+            "matched_template": None
+        }
+
+    # 没有找到匹配模版
+    if not templates:
+        logger.info("   📭 未找到匹配的模版")
+        execution = StepExecution(
+            step=current_step,
+            execution_res="未找到匹配的模版，将从零开始规划",
+            status="completed"
+        )
+        logger.info("=" * 60)
+        return {
+            "pending_steps": remaining_steps,
+            "completed_steps": [execution],
+            "matched_template": None
+        }
+
+    # 找到模版
+    logger.info(f"   ✅ 找到 {len(templates)} 个匹配模版:")
+    for idx, t in enumerate(templates, 1):
+        logger.info(f"      {idx}. {t['title']} (相似度: {t['similarity_score']:.2%})")
+
+    # 构建搜索结果描述
+    result_description = f"找到 {len(templates)} 个匹配模版:\n"
+    for idx, t in enumerate(templates, 1):
+        sections_info = ""
+        if t.get('sections'):
+            sections_info = f", {len(t['sections'])} 个章节"
+        result_description += f"\n{idx}. 【{t['title']}】\n"
+        result_description += f"   分类: {t['category']}\n"
+        result_description += f"   相似度: {t['similarity_score']:.2%}{sections_info}\n"
+        result_description += f"   简介: {t['summary'][:150]}...\n"
+
+    execution = StepExecution(
+        step=current_step,
+        execution_res=result_description,
+        status="completed"
+    )
+
+    # 如果只找到一个高相似度模版（>0.8），直接设置为 matched_template
+    # 否则返回 None，让 Planner 决定是否需要 HUMAN_INVOLVEMENT 让用户选择
+    matched_template = None
+    if len(templates) == 1 and templates[0]['similarity_score'] > 0.8:
+        matched_template = templates[0]
+        logger.info(f"   🎯 高相似度匹配，自动选择: {matched_template['title']}")
+    else:
+        logger.info(f"   📋 多个模版或相似度不够高，需要用户选择")
+        # 将模版列表存入执行结果，供后续 HUMAN_INVOLVEMENT 使用
+        execution.execution_res += f"\n\n[TEMPLATES_DATA]{json.dumps(templates, ensure_ascii=False)}"
+
+    logger.success(f"✅ [TEMPLATE SEARCH NODE] 搜索完成")
+    logger.info(f"   📋 剩余步骤: {len(remaining_steps)} 个")
+    logger.info("=" * 60)
+
+    return {
+        "pending_steps": remaining_steps,
+        "completed_steps": [execution],
+        "matched_template": matched_template
+    }
+
+
 # ==================== 协调器和规划器节点 ====================
 
 async def coordinator_step(state: PlanExecuteState) -> Command[Literal["planner", "__end__"]]:
@@ -98,7 +249,7 @@ async def route_step(state: PlanExecuteState):
 
 
 def _route_decision(state: PlanExecuteState) -> Literal[
-    "execute_research", "execute_human_involvement", "execute_writing_blueprint", "__end__"]:
+    "execute_research", "execute_human_involvement", "execute_template_search", "execute_writing_blueprint", "__end__"]:
     """
     路由决策函数：根据当前待执行步骤的类型决定路由
     这是条件函数，用于 add_conditional_edges，返回字符串
@@ -106,6 +257,7 @@ def _route_decision(state: PlanExecuteState) -> Literal[
     返回值：
     - "execute_research": 路由到研究节点
     - "execute_human_involvement": 路由到人类参与节点
+    - "execute_template_search": 路由到模版搜索节点
     - "execute_writing_blueprint": 路由到蓝图构建节点
     - "__end__": 没有待执行步骤，结束工作流
     """
@@ -121,6 +273,7 @@ def _route_decision(state: PlanExecuteState) -> Literal[
     route_map = {
         StepType.RESEARCH: "execute_research",
         StepType.HUMAN_INVOLVEMENT: "execute_human_involvement",
+        StepType.TEMPLATE_SEARCH: "execute_template_search",
         StepType.WRITING_BLUEPRINT: "execute_writing_blueprint",
     }
 

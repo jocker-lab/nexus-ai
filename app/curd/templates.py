@@ -31,7 +31,6 @@ class TemplateTable:
         writing_tone: str = "neutral",
         target_audience: Optional[str] = None,
         sections: Optional[list] = None,
-        estimated_total_words: int = 5000,
         special_requirements: Optional[str] = None,
         template_id: Optional[str] = None,
     ) -> Optional[Template]:
@@ -48,8 +47,7 @@ class TemplateTable:
             writing_style: 写作风格
             writing_tone: 写作语气
             target_audience: 目标读者
-            sections: 章节结构
-            estimated_total_words: 建议总字数
+            sections: 章节结构（每个章节包含 estimated_percentage）
             special_requirements: 特殊要求
             template_id: 指定的模版ID（可选，用于与 Milvus 同步）
 
@@ -71,7 +69,6 @@ class TemplateTable:
                     writing_tone=writing_tone,
                     target_audience=target_audience,
                     sections=sections,
-                    estimated_total_words=estimated_total_words,
                     special_requirements=special_requirements,
                 )
                 db.add(template)
