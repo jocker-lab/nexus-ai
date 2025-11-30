@@ -78,6 +78,11 @@ class Settings(BaseSettings):
         description="MinIO 存储桶名称"
     )
 
+    MINIO_PENDING_BUCKET: str = Field(
+        "pending-uploads",
+        description="MinIO 待处理文件存储桶名称"
+    )
+
     MINIO_SECURE: bool = Field(
         False,
         description="是否使用 HTTPS 连接 MinIO"

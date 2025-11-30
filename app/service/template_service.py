@@ -7,14 +7,18 @@
 
 import uuid
 from typing import Optional, List, Dict, Any
+
+from dotenv import load_dotenv
 from loguru import logger
-from langchain_deepseek import ChatDeepSeek
+from langchain.chat_models import init_chat_model
 
 from app.schemas.template_outline_schema import TemplateOutline
 from app.agents.prompts.template import render_prompt_template
 from app.clients.sentiment_embedding_client import SentimentEmbeddingClient
 from app.clients.milvus_client import MilvusClient
 from app.curd.templates import Templates
+
+load_dotenv()
 
 # Prompt 模板路径
 PROMPT_PATH = "template_prompts"
@@ -60,7 +64,7 @@ async def upload_template(
     logger.info("[TemplateService] 步骤 1/3: 提取模版大纲...")
 
     try:
-        llm = ChatDeepSeek(model="deepseek-chat", temperature=0)
+        llm = init_chat_model("deepseek:deepseek-chat", temperature=0)
         llm_with_structure = llm.with_structured_output(TemplateOutline)
 
         # 文档预览（避免 token 过多）
