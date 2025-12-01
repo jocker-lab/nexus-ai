@@ -11,7 +11,7 @@ from typing import AsyncGenerator, Dict
 
 from app.config import LOCAL_BIG_MODEL_PARAMS, settings
 
-from app.api.endpoints import chats, folders, reports
+from app.api.endpoints import chats, folders, reports, model_providers
 from loguru import logger
 # from langchain.prompts import ChatPromptTemplate
 # from app.core.prompts.chart_generate_prompt import CHART_GENERATE_PROMPTS
@@ -39,6 +39,8 @@ app.include_router(chats.router, prefix="/api/v1/chats", tags=["chat"])
 app.include_router(folders.router, prefix="/api/v1/folders", tags=["folder"])
 
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
+
+app.include_router(model_providers.router, prefix="/api/v1/model-providers", tags=["model-providers"])
 
 @app.get("/")
 def read_root():

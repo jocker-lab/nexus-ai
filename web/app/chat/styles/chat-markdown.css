@@ -1,0 +1,189 @@
+/* Chat Markdown Styles - Neural Elegance Theme */
+
+/* ============================================
+   KaTeX Math Formula Styling
+   ============================================ */
+
+/* Block math (display mode) */
+.chat-markdown .katex-display {
+  margin: 1.25rem 0;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(
+    135deg,
+    rgba(6, 182, 212, 0.08) 0%,
+    rgba(139, 92, 246, 0.05) 50%,
+    rgba(6, 182, 212, 0.03) 100%
+  );
+  border: 1px solid rgba(6, 182, 212, 0.15);
+  border-radius: 12px;
+  overflow-x: auto;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.chat-markdown .katex-display > .katex {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* Inline math */
+.chat-markdown .katex {
+  color: rgba(125, 211, 252, 0.95);
+  font-size: 1.02em;
+}
+
+/* Inline math in paragraphs */
+.chat-markdown > p .katex,
+.chat-markdown p .katex {
+  padding: 0.12em 0.35em;
+  margin: 0 0.1em;
+  background: rgba(6, 182, 212, 0.1);
+  border-radius: 5px;
+  border: 1px solid rgba(6, 182, 212, 0.12);
+}
+
+/* Math formula hover effect */
+.chat-markdown .katex-display:hover {
+  border-color: rgba(6, 182, 212, 0.25);
+  box-shadow:
+    0 4px 25px rgba(6, 182, 212, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================
+   Streaming Animation
+   ============================================ */
+
+.chat-markdown.streaming > *:last-child::after {
+  content: '▋';
+  animation: cursor-blink 1s step-end infinite;
+  color: rgba(6, 182, 212, 0.8);
+  margin-left: 2px;
+  font-weight: normal;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ============================================
+   List Styling Overrides
+   ============================================ */
+
+/* Ordered list - use numbers */
+.chat-markdown ol > li {
+  display: list-item;
+  list-style-type: decimal;
+  list-style-position: outside;
+  margin-left: 1.5rem;
+}
+
+.chat-markdown ol > li::marker {
+  color: rgba(6, 182, 212, 0.7);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Unordered list - custom bullets handled in component */
+.chat-markdown ul > li {
+  list-style: none;
+}
+
+/* Nested lists */
+.chat-markdown ul ul,
+.chat-markdown ol ol,
+.chat-markdown ul ol,
+.chat-markdown ol ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ============================================
+   Code Block Enhancements
+   ============================================ */
+
+.chat-code-block {
+  position: relative;
+}
+
+.chat-code-block::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(6, 182, 212, 0.3) 20%,
+    rgba(139, 92, 246, 0.3) 80%,
+    transparent
+  );
+}
+
+/* ============================================
+   Typography Refinements
+   ============================================ */
+
+.chat-markdown {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* First paragraph - no top margin */
+.chat-markdown > p:first-child {
+  margin-top: 0;
+}
+
+/* Last element - no bottom margin */
+.chat-markdown > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================
+   Table Enhancements
+   ============================================ */
+
+.chat-markdown table {
+  border-collapse: collapse;
+}
+
+.chat-markdown th {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.chat-markdown tr:hover td {
+  background: rgba(6, 182, 212, 0.03);
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
+.chat-markdown pre::-webkit-scrollbar,
+.chat-markdown .katex-display::-webkit-scrollbar {
+  height: 6px;
+}
+
+.chat-markdown pre::-webkit-scrollbar-track,
+.chat-markdown .katex-display::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 3px;
+}
+
+.chat-markdown pre::-webkit-scrollbar-thumb,
+.chat-markdown .katex-display::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.chat-markdown pre::-webkit-scrollbar-thumb:hover,
+.chat-markdown .katex-display::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

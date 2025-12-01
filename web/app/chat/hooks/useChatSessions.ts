@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { API_ENDPOINTS, buildUrl } from '@/lib/config'
 
 export interface ChatSession {
   id: string
@@ -23,7 +24,8 @@ export function useChatSessions(options: UseChatSessionsOptions) {
   const loadSessions = useCallback(async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`http://localhost:8000/api/v1/chats/?user_id=${userId}`)
+      const url = buildUrl(API_ENDPOINTS.chats, { user_id: userId })
+      const response = await fetch(url)
 
       if (!response.ok) {
         throw new Error('Failed to load sessions')
@@ -42,7 +44,8 @@ export function useChatSessions(options: UseChatSessionsOptions) {
   // 删除会话
   const deleteSession = useCallback(async (sessionId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chats/${sessionId}?user_id=${userId}`, {
+      const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}`, { user_id: userId })
+      const response = await fetch(url, {
         method: 'DELETE'
       })
 
@@ -61,7 +64,8 @@ export function useChatSessions(options: UseChatSessionsOptions) {
   // 重命名会话
   const renameSession = useCallback(async (sessionId: string, newTitle: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chats/${sessionId}/title?user_id=${userId}`, {
+      const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}/title`, { user_id: userId })
+      const response = await fetch(url, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -86,7 +90,8 @@ export function useChatSessions(options: UseChatSessionsOptions) {
   // 置顶会话
   const pinSession = useCallback(async (sessionId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chats/${sessionId}/pin?user_id=${userId}`, {
+      const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}/pin`, { user_id: userId })
+      const response = await fetch(url, {
         method: 'POST'
       })
 
@@ -105,7 +110,8 @@ export function useChatSessions(options: UseChatSessionsOptions) {
   // 归档会话
   const archiveSession = useCallback(async (sessionId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chats/${sessionId}/archive?user_id=${userId}`, {
+      const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}/archive`, { user_id: userId })
+      const response = await fetch(url, {
         method: 'POST'
       })
 
@@ -124,7 +130,8 @@ export function useChatSessions(options: UseChatSessionsOptions) {
   // 复制会话
   const cloneSession = useCallback(async (sessionId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chats/${sessionId}/clone?user_id=${userId}`, {
+      const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}/clone`, { user_id: userId })
+      const response = await fetch(url, {
         method: 'POST'
       })
 
@@ -143,7 +150,8 @@ export function useChatSessions(options: UseChatSessionsOptions) {
   // 下载会话
   const downloadSession = useCallback(async (sessionId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chats/${sessionId}/export?user_id=${userId}`)
+      const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}/export`, { user_id: userId })
+      const response = await fetch(url)
 
       if (!response.ok) {
         throw new Error('Failed to download session')
@@ -151,14 +159,14 @@ export function useChatSessions(options: UseChatSessionsOptions) {
 
       // 获取文件内容并触发下载
       const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
+      const downloadUrl = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
+      a.href = downloadUrl
       a.download = `chat_${sessionId}.json`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
+      window.URL.revokeObjectURL(downloadUrl)
     } catch (error) {
       console.error('Failed to download session:', error)
       onError?.(error as Error)
