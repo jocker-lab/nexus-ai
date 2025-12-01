@@ -85,6 +85,22 @@ def process_template_file(
                 "error": "模版提取失败"
             }
 
+        # 检查是否为重复文档
+        if result.get("error") == "duplicate":
+            logger.warning(f"[FileTask] 检测到重复文档: {filename}")
+            # 清理临时文件
+            minio_client = get_minio_client()
+            minio_client.delete_pending_file(object_name)
+            return {
+                "success": False,
+                "task_id": task_id,
+                "error": "duplicate",
+                "message": result.get("message"),
+                "duplicate_template_id": result.get("duplicate_template_id"),
+                "duplicate_title": result.get("duplicate_title"),
+                "similarity": result.get("similarity"),
+            }
+
         logger.info(f"[FileTask] 模版提取成功: {result.get('template_id')}")
 
         # 3. 删除 pending bucket 中的文件

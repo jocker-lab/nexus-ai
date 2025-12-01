@@ -12,6 +12,9 @@ from sqlalchemy import pool
 from alembic import context
 from app.database.db import Base
 
+# 导入所有模型，确保 Alembic 能检测到它们
+from app.models.templates import Template  # noqa: F401
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

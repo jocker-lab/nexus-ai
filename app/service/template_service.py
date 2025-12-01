@@ -18,13 +18,16 @@ from app.clients.sentiment_embedding_client import SentimentEmbeddingClient
 from app.clients.milvus_client import MilvusClient
 from app.curd.templates import Templates
 
-load_dotenv()
+load_dotenv(override=False)  # 不覆盖已存在的环境变量
 
 # Prompt 模板路径
 PROMPT_PATH = "template_prompts"
 
 # 模版向量集合名称（与文档向量分开）
 TEMPLATE_COLLECTION = "template_vectors"
+
+# 重复检测阈值（相似度 >= 此值视为重复文档）
+DUPLICATE_THRESHOLD = 0.95
 
 
 def get_template_milvus_client() -> MilvusClient:
@@ -61,7 +64,7 @@ async def upload_template(
         return None
 
     # === 1. LLM 提取模版大纲 ===
-    logger.info("[TemplateService] 步骤 1/3: 提取模版大纲...")
+    logger.info("[TemplateService] 步骤 1/4: 提取模版大纲...")
 
     try:
         llm = init_chat_model("deepseek:deepseek-chat", temperature=0)
@@ -87,7 +90,7 @@ async def upload_template(
         return None
 
     # === 2. 向量化 ===
-    logger.info("[TemplateService] 步骤 2/3: 向量化...")
+    logger.info("[TemplateService] 步骤 2/4: 向量化...")
 
     try:
         # 生成模版ID
@@ -113,8 +116,51 @@ async def upload_template(
         logger.error(f"[TemplateService] 向量化失败: {e}")
         return None
 
+    # === 2.5 重复检测 ===
+    logger.info("[TemplateService] 步骤 2.5/4: 重复检测...")
+
+    try:
+        milvus_client = get_template_milvus_client()
+        similar_results = milvus_client.search(
+            query_vector=embedding_vector,
+            top_k=1,
+            threshold=DUPLICATE_THRESHOLD
+        )
+
+        if similar_results:
+            # 找到高度相似的文档，视为重复
+            duplicate = similar_results[0]
+            duplicate_id = duplicate["uuid"]
+            similarity = duplicate["score"]
+
+            # 查询重复文档的详细信息
+            duplicate_template = Templates.get_template_by_id(duplicate_id)
+            duplicate_title = duplicate_template.title if duplicate_template else "未知"
+
+            logger.warning(
+                f"[TemplateService] ⚠ 检测到重复文档！"
+                f"\n  - 相似度: {similarity:.2%}"
+                f"\n  - 已存在模版: {duplicate_title} (ID: {duplicate_id})"
+                f"\n  - 当前上传: {original_filename}"
+            )
+
+            return {
+                "success": False,
+                "error": "duplicate",
+                "message": f"检测到重复文档，与已有模版「{duplicate_title}」相似度达 {similarity:.2%}",
+                "duplicate_template_id": duplicate_id,
+                "duplicate_title": duplicate_title,
+                "similarity": similarity,
+            }
+
+        logger.info("[TemplateService]   ✓ 未检测到重复文档")
+
+    except Exception as e:
+        # 重复检测失败不阻塞上传，只记录警告
+        logger.warning(f"[TemplateService] 重复检测异常（继续上传）: {e}")
+
     # === 3. 存储 ===
-    logger.info("[TemplateService] 步骤 3/3: 存储...")
+    logger.info("[TemplateService] 步骤 3/4: 存储...")
 
     try:
         # 3.1 存入 Milvus

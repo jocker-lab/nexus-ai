@@ -7,6 +7,7 @@
 
 import uuid
 from sqlalchemy import Column, String, Text, Integer, TIMESTAMP, VARCHAR, JSON, func
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
 
 from app.database.db import Base
 
@@ -25,7 +26,7 @@ class Template(Base):
 
     # ========== 原始内容 ==========
     original_filename = Column(VARCHAR(255))  # 原始文件名
-    markdown_content = Column(Text)  # Docling 转换后的 Markdown
+    markdown_content = Column(MEDIUMTEXT)  # Docling 转换后的 Markdown（最大 16MB）
 
     # ========== 风格信息 ==========
     writing_style = Column(VARCHAR(20), default="business")  # 写作风格

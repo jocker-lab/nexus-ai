@@ -50,3 +50,11 @@ user_choice = interrupt(interrupt_payload)
 - [x] `TEMPLATE_SEARCH` StepType 和执行节点
 - [x] Planner prompt 更新
 - [x] `estimated_words` 改为 `estimated_percentage`
+
+### 异步文件上传 v1.0
+- [x] Celery + Redis 任务队列配置
+- [x] MinIO pending-uploads bucket 暂存上传文件
+- [x] Docling 文档解析（PDF/DOCX → Markdown）
+- [x] 异步处理流程：上传 → 暂存 → Celery 后台处理 → 清理
+- [x] 向量去重检测（相似度 ≥ 95% 视为重复文档）
+- [x] templates 表 Alembic 迁移
