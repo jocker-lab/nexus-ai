@@ -13,6 +13,7 @@ from app.schemas.tags import TagModel
 from app.curd.chats import Chats
 from app.curd.tags import Tags
 from app.curd.folders import Folders
+from app.curd.model_providers import ModelProviders
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -21,6 +22,7 @@ from app.constants import ERROR_MESSAGES
 
 # LangChain imports for streaming chat
 from langchain_openai import ChatOpenAI
+from langchain_deepseek import ChatDeepSeek
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, BaseMessage
 
 router = APIRouter()
@@ -161,6 +163,8 @@ class StreamChatRequest(BaseModel):
     chat_id: Optional[str] = None  # 首次调用时可为空，会自动创建
     user_id: str
     stream: bool = True
+    provider_id: Optional[str] = None  # 模型供应商配置ID
+    model_name: Optional[str] = None   # 模型名称（用于Ollama等需要指定具体模型的场景）
 
 
 def convert_messages_to_langchain(messages: dict) -> list[BaseMessage]:
@@ -198,11 +202,18 @@ def trim_langchain_messages(messages: list[BaseMessage], max_rounds: int = 10) -
     return system_messages + conversation_messages
 
 
-async def stream_chat_response(message: str, chat_id: Optional[str], user_id: str):
+async def stream_chat_response(
+    message: str,
+    chat_id: Optional[str],
+    user_id: str,
+    provider_id: Optional[str] = None,
+    model_name: Optional[str] = None
+):
     """流式生成聊天响应并保存到数据库"""
     try:
         logger.info(f"Starting chat stream for chat_id: {chat_id}, user_id: {user_id}")
         logger.info(f"User message: {message}")
+        logger.info(f"Provider ID: {provider_id}, Model Name: {model_name}")
 
         # 标记是否为新会话
         is_new_chat = False
@@ -240,18 +251,91 @@ async def stream_chat_response(message: str, chat_id: Optional[str], user_id: st
         # 修剪历史，保留最近10轮对话
         langchain_messages = trim_langchain_messages(langchain_messages, max_rounds=10)
 
+        # 获取模型配置
+        llm_model = "qwen2.5:32b"  # 默认模型
+        llm_base_url = "http://localhost:11434/v1"  # 默认 Ollama
+        llm_api_key = "ollama"  # 默认
+        extra_kwargs = {}  # 额外参数
+
+        if provider_id:
+            # 使用 get_provider_by_id 而不是 get_provider_by_id_and_user_id
+            # 因为前端的 useChat 和 useModelProviders 可能使用不同的默认 user_id
+            provider = ModelProviders.get_provider_by_id(provider_id)
+            if provider:
+                logger.info(f"Found provider: {provider.name}, type: {provider.provider_type}")
+
+                # 根据 provider_type 配置 LLM
+                if provider.provider_type == "ollama":
+                    llm_base_url = (provider.base_url or "http://localhost:11434") + "/v1"
+                    llm_api_key = "ollama"
+                    # Ollama 模型名从 provider_config 或 model_name 参数获取
+                    config = provider.provider_config or {}
+                    llm_model = model_name or config.get("model_name", "qwen2.5:32b")
+                elif provider.provider_type == "deepseek":
+                    llm_base_url = provider.base_url or "https://api.deepseek.com/v1"
+                    llm_api_key = provider.api_key or ""
+                    llm_model = model_name or "deepseek-chat"
+                    # DeepSeek Reasoner 模型需要特殊处理
+                    if llm_model in ["deepseek-reasoner"]:
+                        extra_kwargs["model_kwargs"] = {"stream_options": {"include_usage": True}}
+                elif provider.provider_type == "openai":
+                    llm_base_url = provider.base_url or "https://api.openai.com/v1"
+                    llm_api_key = provider.api_key or ""
+                    llm_model = model_name or "gpt-4o"
+                elif provider.provider_type == "anthropic":
+                    # Anthropic 需要使用专门的 ChatAnthropic
+                    # 这里暂时用 OpenAI 兼容模式（如果有代理）
+                    llm_base_url = provider.base_url or "https://api.anthropic.com/v1"
+                    llm_api_key = provider.api_key or ""
+                    llm_model = model_name or "claude-3-opus-20240229"
+                else:
+                    # 其他供应商使用通用 OpenAI 兼容方式
+                    if provider.base_url:
+                        llm_base_url = provider.base_url
+                    if provider.api_key:
+                        llm_api_key = provider.api_key
+                    if model_name:
+                        llm_model = model_name
+
+                logger.info(f"Configured LLM: model={llm_model}, base_url={llm_base_url}")
+            else:
+                logger.warning(f"Provider not found: {provider_id}, using default config")
+        else:
+            logger.info("No provider_id specified, using default Ollama config")
+
         # 配置LLM
-        llm = ChatOpenAI(
-            model="qwen2.5:32b",
-            base_url="http://localhost:11434/v1",
-            api_key="ollama",
-            temperature=0.7,
-            streaming=True
-        )
+        # 对于 DeepSeek 使用专门的 ChatDeepSeek 以获得 reasoning_content 支持
+        if provider and provider.provider_type == "deepseek":
+            llm = ChatDeepSeek(
+                model=llm_model,
+                api_key=llm_api_key,
+                streaming=True,
+            )
+            logger.info(f"Using ChatDeepSeek for model={llm_model}")
+        else:
+            llm = ChatOpenAI(
+                model=llm_model,
+                base_url=llm_base_url,
+                api_key=llm_api_key,
+                temperature=0.7,
+                streaming=True,
+                **extra_kwargs
+            )
 
         # 流式调用LLM
         accumulated_content = ""
+        accumulated_reasoning = ""
         async for chunk in llm.astream(langchain_messages):
+            # 检查 reasoning_content (DeepSeek Reasoner 推理模型的思考过程)
+            # LangChain 会将非标准字段放到 additional_kwargs 中
+            reasoning_content = chunk.additional_kwargs.get('reasoning_content', '')
+            if reasoning_content:
+                accumulated_reasoning += reasoning_content
+                # 发送思考过程
+                yield f"data: {json.dumps({'reasoning_content': reasoning_content}, ensure_ascii=False)}\n\n"
+                await asyncio.sleep(0.01)
+
+            # 处理正式内容
             if chunk.content:
                 accumulated_content += chunk.content
                 # 发送SSE格式的数据
@@ -357,7 +441,13 @@ async def chat_stream_endpoint(request: StreamChatRequest):
                 raise HTTPException(status_code=404, detail="Chat not found")
 
         return StreamingResponse(
-            stream_chat_response(request.message, request.chat_id, request.user_id),
+            stream_chat_response(
+                request.message,
+                request.chat_id,
+                request.user_id,
+                request.provider_id,
+                request.model_name
+            ),
             media_type="text/event-stream",
             headers={
                 "Cache-Control": "no-cache",
