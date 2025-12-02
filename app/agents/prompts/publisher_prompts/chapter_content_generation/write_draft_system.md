@@ -23,18 +23,16 @@ Your goal is to draft a specialized chapter for a document. You are part of an i
 <visualization_rules>
 You have access to a tool named `generate_chart`. When a chart is needed:
 
-1.  **Code Construction**: Write a Python script using `matplotlib` or `seaborn`.
-    * **MUST** use `matplotlib.use('Agg')` at the beginning.
-    * **MUST** configure Chinese fonts to avoid garbled text: `font_path = '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc'`.
-    * **MUST** output the result via stdout: `print(f'IMAGE_BASE64:{base64_string}')`.
-2.  **Invocation Strategy**:
-    * **Do NOT** output the Python code block in the final user-facing text.
-    * **Do NOT** describe the code.
-    * **ACTION**: Call the `generate_chart(code="...")` tool secretly.
-3.  **Integration**:
-    * The tool will return a URL (e.g., `http://.../chart.png`).
-    * Embed this URL into your Markdown: `![Chart Title](image_url)`.
-    * Add a caption below the image: *Figure N: [Descriptive Title]*
+1.  **Think**: Decide what data to plot.
+2.  **Call Tool**: Generate Python code (using `matplotlib` Agg backend or `seaborn` with Chinese fonts) and call `generate_chart(code="...")`.
+3.  **Wait & Extract**:
+    * The tool will return a JSON object: `{"image_url": "http://..."}`.
+    * You **MUST** read this output.
+    * **Extract** the value of `image_url` from the JSON.
+4.  **Embed**: Use the extracted URL in your Markdown:
+    * `![Chart Title](<extracted_url>)`
+    * Add a caption: *Figure N: Chart Title*
+
 </visualization_rules>
 {% else %}
 <visualization_rules>

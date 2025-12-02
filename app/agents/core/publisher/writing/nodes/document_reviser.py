@@ -74,7 +74,11 @@ async def document_reviser(state: DocumentState) -> Dict[str, Any]:
     )
 
     # === 调用 LLM ===
-    llm = init_chat_model("deepseek:deepseek-chat", temperature=0.7)
+    llm = init_chat_model(
+        "deepseek:deepseek-reasoner",
+        max_tokens=16384,
+        timeout=120,  # 推理模型耗时较长，加大超时
+    )
 
     try:
         messages = [

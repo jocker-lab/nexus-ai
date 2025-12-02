@@ -70,9 +70,10 @@ async def revise_draft(state: ChapterState) -> Dict[str, Any]:
         "publisher_prompts/chapter_writing/chapter_revise_task",
         {
             "draft": current_draft,
-            "general_feedback": latest_review.general_feedback,
-            "actionable_suggestions": latest_review.actionable_suggestions,
+            "review_result": latest_review,
             "language": state["document_outline"].language,
+            "chapter_outline": state["chapter_outline"],
+            "document_outline": state["document_outline"],
         }
     )
 
