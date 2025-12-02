@@ -12,16 +12,41 @@ from typing import AsyncGenerator, Dict
 from app.config import LOCAL_BIG_MODEL_PARAMS, settings
 
 from app.api.endpoints import chats, folders, reports, model_providers
+from app.api.endpoints import auth, users, groups, roles
 from loguru import logger
 # from langchain.prompts import ChatPromptTemplate
 # from app.core.prompts.chart_generate_prompt import CHART_GENERATE_PROMPTS
 from langchain_core.output_parsers import JsonOutputParser
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+
+from app.database.db import SessionLocal
+from app.auth.init_admin import ensure_admin_exists
 
 # from app.core.agents.system_assistant_agent.src.agent.graph import SystemAssistantAgent
 # from app.core.agents.system_assistant_agent.src.agent.tools import vector_store_menu_collect, vector_store_system_collect
 
-app = FastAPI(title="LangGraph API Service")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    # 启动时执行
+    logger.info("Application starting up...")
+
+    # 初始化默认 admin 用户
+    db = SessionLocal()
+    try:
+        ensure_admin_exists(db)
+    finally:
+        db.close()
+
+    yield
+
+    # 关闭时执行
+    logger.info("Application shutting down...")
+
+
+app = FastAPI(title="LangGraph API Service", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,6 +66,12 @@ app.include_router(folders.router, prefix="/api/v1/folders", tags=["folder"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
 
 app.include_router(model_providers.router, prefix="/api/v1/model-providers", tags=["model-providers"])
+
+# 认证和用户管理路由
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
+app.include_router(groups.router, prefix="/api/v1/groups", tags=["groups"])
+app.include_router(roles.router, prefix="/api/v1/roles", tags=["roles"])
 
 @app.get("/")
 def read_root():

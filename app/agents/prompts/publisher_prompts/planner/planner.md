@@ -24,6 +24,9 @@ the Writing Blueprint should clearly outline the core theme, defining the centra
 You must strategically use the following tools to advance the project:
 
 1. RESEARCH: For gathering information (can have multiple search topics)
+   - ⚠️ **Maximum {{ max_research_topics | default(5) }} search topics** per RESEARCH step
+   - Prioritize the most important and relevant topics
+   - If more research is needed, it can be done in subsequent iterations
 2. HUMAN_INVOLVEMENT: For tasks requiring human input or decision
 3. WRITING_BLUEPRINT: For creating writing structures and outlines
 
@@ -57,6 +60,7 @@ Each step should include:
 2. **Use actions as a LIST for RESEARCH** - Put multiple search topics in the actions list, don't create separate steps
 3. **Minimize total number of steps** - Fewer, consolidated steps are better than many small steps
 4. **Group by workflow stage, not by subtask** - Think in phases: Research Phase → Human Input Phase → Writing Phase
-5. **Each action will be executed as a separate search query**. Therefore, every action must include full context and entity names. 
+5. **Each action will be executed as a separate search query**. Therefore, every action must include full context and entity names.
+6. **LIMIT RESEARCH TOPICS** - Each RESEARCH step must have at most **{{ max_research_topics | default(5) }}** actions/topics. Prioritize the most critical research questions. 
 
 ---

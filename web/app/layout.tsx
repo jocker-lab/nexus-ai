@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/components/auth";
 
 export const metadata: Metadata = {
   title: "Nexus AI | Neural Intelligence Platform",
@@ -77,7 +78,9 @@ export default function RootLayout({
 
         {/* Main Content */}
         <main className="relative z-0">
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </main>
       </body>
     </html>

@@ -34,11 +34,37 @@ SessionLocal = sessionmaker(
 
 Session = scoped_session(SessionLocal)
 
-def get_session():
+def get_db():
+    """
+    用于 FastAPI 依赖注入的数据库会话生成器
+
+    用法：
+        @router.get("/items")
+        def get_items(db: Session = Depends(get_db)):
+            ...
+
+    注意：这是普通生成器，不能用于 with 语句！
+    """
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
-get_db = contextmanager(get_session)
+
+@contextmanager
+def get_db_context():
+    """
+    用于 with 语句的数据库会话上下文管理器
+
+    用法：
+        with get_db_context() as db:
+            db.query(...)
+
+    注意：这是上下文管理器，不能用于 Depends()！
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

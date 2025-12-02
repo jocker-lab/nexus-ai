@@ -268,7 +268,7 @@ async def create_report_session(
     import uuid
     import time
     from app.models.chats import Chat
-    from app.database.db import get_db
+    from app.database.db import get_db_context
 
     # 1. 创建会话
     chat_id = str(uuid.uuid4())
@@ -288,7 +288,7 @@ async def create_report_session(
         "tags": session_data.tags.split(",") if session_data.tags else []
     }
 
-    with get_db() as db:
+    with get_db_context() as db:
         chat = Chat(
             id=chat_id,
             user_id=user_id,

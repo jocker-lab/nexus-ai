@@ -10,6 +10,9 @@ import { RenameDialog } from './components/RenameDialog';
 import { InputEnhancementsMenu, InputEnhancement } from './components/InputEnhancementsMenu';
 import ChatMarkdown from './components/ChatMarkdown';
 import { API_ENDPOINTS } from '@/lib/config';
+import { logout } from '@/lib/auth/api';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/lib/stores/auth';
 import type { ProviderType, AvailableModel, ModelProviderResponse } from '@/types/model-providers';
 
 // ============================================
@@ -246,9 +249,10 @@ const SidebarSection = ({ title, icon, children, defaultOpen = true, collapsed }
 interface UserMenuProps {
   onClose: () => void;
   onOpenSettings: () => void;
+  onLogout: () => void;
 }
 
-const UserMenu = ({ onClose, onOpenSettings }: UserMenuProps) => {
+const UserMenu = ({ onClose, onOpenSettings, onLogout }: UserMenuProps) => {
   const menuItems = [
     {
       icon: (
@@ -333,7 +337,7 @@ const UserMenu = ({ onClose, onOpenSettings }: UserMenuProps) => {
 
       <div className="p-1.5">
         <motion.button
-          onClick={() => { console.log('Logout'); onClose(); }}
+          onClick={() => { onLogout(); onClose(); }}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[var(--nexus-error)]/80 hover:text-[var(--nexus-error)] hover:bg-[var(--nexus-error)]/10 transition-all duration-200 group"
           whileHover={{ x: 2 }}
           whileTap={{ scale: 0.98 }}
@@ -2189,9 +2193,17 @@ const quickActions = [
 // ============================================
 
 export default function ChatPage() {
-  const userId = 'default_user';
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const userId = user?.id || 'default_user';
   const [selectedChatId, setSelectedChatId] = useState<string>('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // 登出处理
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
 
   const {
     messages,
@@ -2693,6 +2705,7 @@ export default function ChatPage() {
               <UserMenu
                 onClose={() => setShowUserMenu(false)}
                 onOpenSettings={() => setShowSettings(true)}
+                onLogout={handleLogout}
               />
             )}
           </AnimatePresence>
@@ -2709,14 +2722,14 @@ export default function ChatPage() {
           >
             <div className="relative flex-shrink-0">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--nexus-cyan)] to-[var(--nexus-violet)] flex items-center justify-center text-white text-xs font-bold">
-                A
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
               </div>
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[var(--nexus-success)] border-2 border-[var(--nexus-abyss)]" />
             </div>
             {!sidebarCollapsed && (
               <>
                 <div className="flex-1 min-w-0 text-left">
-                  <div className="text-sm font-medium text-[var(--text-primary)]">arvin</div>
+                  <div className="text-sm font-medium text-[var(--text-primary)]">{user?.name || 'User'}</div>
                   <div className="text-xs text-[var(--nexus-success)] flex items-center gap-1">
                     在线
                   </div>

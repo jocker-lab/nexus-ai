@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { createAuthHeaders } from '@/lib/api'
+import { useAuthStore } from '@/lib/stores/auth'
 
 export interface Report {
   id: string
@@ -34,13 +36,21 @@ export function useReportData(reportId: string): UseReportDataReturn {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchReport = async () => {
+  // 从认证 store 获取用户 ID
+  const { user } = useAuthStore()
+  const userId = user?.id || ''
+
+  const fetchReport = useCallback(async () => {
+    if (!userId) return
+
     try {
       setLoading(true)
       setError(null)
 
-      // 通过Next.js API Route代理后端请求
-      const response = await fetch(`/api/reports/${reportId}`)
+      // 通过Next.js API Route代理后端请求，附带认证头
+      const response = await fetch(`/api/reports/${reportId}`, {
+        headers: createAuthHeaders(),
+      })
 
       if (!response.ok) {
         throw new Error(`Failed to fetch report: ${response.statusText}`)
@@ -54,13 +64,13 @@ export function useReportData(reportId: string): UseReportDataReturn {
     } finally {
       setLoading(false)
     }
-  }
+  }, [reportId, userId])
 
   useEffect(() => {
-    if (reportId) {
+    if (reportId && userId) {
       fetchReport()
     }
-  }, [reportId])
+  }, [reportId, userId, fetchReport])
 
   return {
     report,

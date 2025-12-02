@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { API_ENDPOINTS, buildUrl } from '@/lib/config'
+import { useAuthStore } from '@/lib/stores/auth'
+import { createAuthHeaders } from '@/lib/api'
 
 export interface ChatSession {
   id: string
@@ -10,22 +12,29 @@ export interface ChatSession {
 }
 
 export interface UseChatSessionsOptions {
-  userId: string
   onError?: (error: Error) => void
 }
 
-export function useChatSessions(options: UseChatSessionsOptions) {
-  const { userId, onError } = options
+export function useChatSessions(options: UseChatSessionsOptions = {}) {
+  const { onError } = options
+
+  // 从认证 store 获取用户 ID
+  const { user } = useAuthStore()
+  const userId = user?.id || ''
 
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   // 加载会话列表
   const loadSessions = useCallback(async () => {
+    if (!userId) return
+
     try {
       setIsLoading(true)
       const url = buildUrl(API_ENDPOINTS.chats, { user_id: userId })
-      const response = await fetch(url)
+      const response = await fetch(url, {
+        headers: createAuthHeaders(),
+      })
 
       if (!response.ok) {
         throw new Error('Failed to load sessions')
@@ -46,7 +55,8 @@ export function useChatSessions(options: UseChatSessionsOptions) {
     try {
       const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}`, { user_id: userId })
       const response = await fetch(url, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: createAuthHeaders(),
       })
 
       if (!response.ok) {
@@ -67,9 +77,7 @@ export function useChatSessions(options: UseChatSessionsOptions) {
       const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}/title`, { user_id: userId })
       const response = await fetch(url, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify({ title: newTitle })
       })
 
@@ -92,7 +100,8 @@ export function useChatSessions(options: UseChatSessionsOptions) {
     try {
       const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}/pin`, { user_id: userId })
       const response = await fetch(url, {
-        method: 'POST'
+        method: 'POST',
+        headers: createAuthHeaders(),
       })
 
       if (!response.ok) {
@@ -112,7 +121,8 @@ export function useChatSessions(options: UseChatSessionsOptions) {
     try {
       const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}/archive`, { user_id: userId })
       const response = await fetch(url, {
-        method: 'POST'
+        method: 'POST',
+        headers: createAuthHeaders(),
       })
 
       if (!response.ok) {
@@ -132,7 +142,8 @@ export function useChatSessions(options: UseChatSessionsOptions) {
     try {
       const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}/clone`, { user_id: userId })
       const response = await fetch(url, {
-        method: 'POST'
+        method: 'POST',
+        headers: createAuthHeaders(),
       })
 
       if (!response.ok) {
@@ -151,7 +162,9 @@ export function useChatSessions(options: UseChatSessionsOptions) {
   const downloadSession = useCallback(async (sessionId: string) => {
     try {
       const url = buildUrl(`${API_ENDPOINTS.chats}/${sessionId}/export`, { user_id: userId })
-      const response = await fetch(url)
+      const response = await fetch(url, {
+        headers: createAuthHeaders(),
+      })
 
       if (!response.ok) {
         throw new Error('Failed to download session')

@@ -7,6 +7,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { API_ENDPOINTS } from '@/lib/config'
+import { useAuthStore } from '@/lib/stores/auth'
+import { createAuthHeaders } from '@/lib/api'
 import type {
   ModelProviderResponse,
   ModelProviderCreateForm,
@@ -50,23 +52,28 @@ interface UseModelProvidersReturn {
   detectOllamaModels: (baseUrl?: string) => Promise<OllamaDetectResponse>
 }
 
-const DEFAULT_USER_ID = 'user-123'
-
 export function useModelProviders(): UseModelProvidersReturn {
   const [providers, setProviders] = useState<ModelProviderResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // 从认证 store 获取用户 ID
+  const { user } = useAuthStore()
+  const userId = user?.id || ''
+
   // ============================================
   // 加载供应商列表
   // ============================================
   const loadProviders = useCallback(async () => {
+    if (!userId) return
+
     setIsLoading(true)
     setError(null)
 
     try {
       const response = await fetch(
-        `${API_ENDPOINTS.modelProviders}?user_id=${DEFAULT_USER_ID}`
+        `${API_ENDPOINTS.modelProviders}?user_id=${userId}`,
+        { headers: createAuthHeaders() }
       )
 
       if (!response.ok) {
@@ -82,7 +89,7 @@ export function useModelProviders(): UseModelProvidersReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [userId])
 
   // 初始加载
   useEffect(() => {
@@ -97,10 +104,10 @@ export function useModelProviders(): UseModelProvidersReturn {
   ): Promise<ModelProviderResponse | null> => {
     try {
       const response = await fetch(
-        `${API_ENDPOINTS.modelProviders}?user_id=${DEFAULT_USER_ID}`,
+        `${API_ENDPOINTS.modelProviders}?user_id=${userId}`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: createAuthHeaders(),
           body: JSON.stringify(data),
         }
       )
@@ -116,7 +123,7 @@ export function useModelProviders(): UseModelProvidersReturn {
       console.error('Failed to create provider:', err)
       return null
     }
-  }, [])
+  }, [userId])
 
   // ============================================
   // 创建 Ollama 供应商
@@ -126,10 +133,10 @@ export function useModelProviders(): UseModelProvidersReturn {
   ): Promise<ModelProviderResponse | null> => {
     try {
       const response = await fetch(
-        `${API_ENDPOINTS.modelProviders}/ollama?user_id=${DEFAULT_USER_ID}`,
+        `${API_ENDPOINTS.modelProviders}/ollama?user_id=${userId}`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: createAuthHeaders(),
           body: JSON.stringify(data),
         }
       )
@@ -145,7 +152,7 @@ export function useModelProviders(): UseModelProvidersReturn {
       console.error('Failed to create Ollama provider:', err)
       return null
     }
-  }, [])
+  }, [userId])
 
   // ============================================
   // 更新供应商
@@ -156,10 +163,10 @@ export function useModelProviders(): UseModelProvidersReturn {
   ): Promise<ModelProviderResponse | null> => {
     try {
       const response = await fetch(
-        `${API_ENDPOINTS.modelProviders}/${id}?user_id=${DEFAULT_USER_ID}`,
+        `${API_ENDPOINTS.modelProviders}/${id}?user_id=${userId}`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: createAuthHeaders(),
           body: JSON.stringify(data),
         }
       )
@@ -177,7 +184,7 @@ export function useModelProviders(): UseModelProvidersReturn {
       console.error('Failed to update provider:', err)
       return null
     }
-  }, [])
+  }, [userId])
 
   // ============================================
   // 更新 Ollama 供应商
@@ -188,10 +195,10 @@ export function useModelProviders(): UseModelProvidersReturn {
   ): Promise<ModelProviderResponse | null> => {
     try {
       const response = await fetch(
-        `${API_ENDPOINTS.modelProviders}/ollama/${id}?user_id=${DEFAULT_USER_ID}`,
+        `${API_ENDPOINTS.modelProviders}/ollama/${id}?user_id=${userId}`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: createAuthHeaders(),
           body: JSON.stringify(data),
         }
       )
@@ -209,7 +216,7 @@ export function useModelProviders(): UseModelProvidersReturn {
       console.error('Failed to update Ollama provider:', err)
       return null
     }
-  }, [])
+  }, [userId])
 
   // ============================================
   // 删除供应商
@@ -217,8 +224,8 @@ export function useModelProviders(): UseModelProvidersReturn {
   const deleteProvider = useCallback(async (id: string): Promise<boolean> => {
     try {
       const response = await fetch(
-        `${API_ENDPOINTS.modelProviders}/${id}?user_id=${DEFAULT_USER_ID}`,
-        { method: 'DELETE' }
+        `${API_ENDPOINTS.modelProviders}/${id}?user_id=${userId}`,
+        { method: 'DELETE', headers: createAuthHeaders() }
       )
 
       if (!response.ok) {
@@ -231,7 +238,7 @@ export function useModelProviders(): UseModelProvidersReturn {
       console.error('Failed to delete provider:', err)
       return false
     }
-  }, [])
+  }, [userId])
 
   // ============================================
   // 切换供应商状态
@@ -241,8 +248,8 @@ export function useModelProviders(): UseModelProvidersReturn {
   ): Promise<ModelProviderResponse | null> => {
     try {
       const response = await fetch(
-        `${API_ENDPOINTS.modelProviders}/${id}/toggle?user_id=${DEFAULT_USER_ID}`,
-        { method: 'POST' }
+        `${API_ENDPOINTS.modelProviders}/${id}/toggle?user_id=${userId}`,
+        { method: 'POST', headers: createAuthHeaders() }
       )
 
       if (!response.ok) {
@@ -258,7 +265,7 @@ export function useModelProviders(): UseModelProvidersReturn {
       console.error('Failed to toggle provider:', err)
       return null
     }
-  }, [])
+  }, [userId])
 
   // ============================================
   // 设置默认供应商
@@ -268,8 +275,8 @@ export function useModelProviders(): UseModelProvidersReturn {
   ): Promise<ModelProviderResponse | null> => {
     try {
       const response = await fetch(
-        `${API_ENDPOINTS.modelProviders}/${id}/default?user_id=${DEFAULT_USER_ID}`,
-        { method: 'POST' }
+        `${API_ENDPOINTS.modelProviders}/${id}/default?user_id=${userId}`,
+        { method: 'POST', headers: createAuthHeaders() }
       )
 
       if (!response.ok) {
@@ -297,7 +304,7 @@ export function useModelProviders(): UseModelProvidersReturn {
         `${API_ENDPOINTS.modelProviders}/test-connection`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: createAuthHeaders(),
           body: JSON.stringify(data),
         }
       )
@@ -323,8 +330,8 @@ export function useModelProviders(): UseModelProvidersReturn {
   ): Promise<ConnectionTestResponse> => {
     try {
       const response = await fetch(
-        `${API_ENDPOINTS.modelProviders}/${id}/test?user_id=${DEFAULT_USER_ID}`,
-        { method: 'POST' }
+        `${API_ENDPOINTS.modelProviders}/${id}/test?user_id=${userId}`,
+        { method: 'POST', headers: createAuthHeaders() }
       )
 
       if (!response.ok) {
@@ -349,7 +356,7 @@ export function useModelProviders(): UseModelProvidersReturn {
         message: err instanceof Error ? err.message : '连接测试失败',
       }
     }
-  }, [])
+  }, [userId])
 
   // ============================================
   // 获取可用模型列表
@@ -359,7 +366,7 @@ export function useModelProviders(): UseModelProvidersReturn {
   ): Promise<AvailableModelsResponse> => {
     try {
       const response = await fetch(
-        `${API_ENDPOINTS.modelProviders}/${providerId}/models?user_id=${DEFAULT_USER_ID}`
+        `${API_ENDPOINTS.modelProviders}/${providerId}/models?user_id=${userId}`
       )
 
       if (!response.ok) {
@@ -374,7 +381,7 @@ export function useModelProviders(): UseModelProvidersReturn {
         models: [],
       }
     }
-  }, [])
+  }, [userId])
 
   // ============================================
   // 检测 Ollama 本地模型

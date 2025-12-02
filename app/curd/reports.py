@@ -14,7 +14,7 @@ from sqlalchemy import desc, and_
 from sqlalchemy.orm import Session
 
 from app.models.reports import Report, ReportVersion, ReportStatus, ChangeType
-from app.database.db import get_db
+from app.database.db import get_db_context
 from loguru import logger
 
 
@@ -53,7 +53,7 @@ class ReportTable:
             创建的Report对象，失败返回None
         """
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 report_id = str(uuid.uuid4())
                 report = Report(
                     id=report_id,
@@ -95,7 +95,7 @@ class ReportTable:
     def get_report_by_id(self, report_id: str) -> Optional[Report]:
         """根据ID获取报告"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 return db.query(Report).filter(Report.id == report_id).first()
         except Exception as e:
             logger.error(f"Failed to get report {report_id}: {e}")
@@ -104,7 +104,7 @@ class ReportTable:
     def get_report_by_id_and_user_id(self, report_id: str, user_id: str) -> Optional[Report]:
         """根据报告ID和用户ID获取报告（权限验证）"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 return db.query(Report).filter(
                     and_(Report.id == report_id, Report.user_id == user_id)
                 ).first()
@@ -132,7 +132,7 @@ class ReportTable:
             报告列表
         """
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 query = db.query(Report).filter(Report.user_id == user_id)
 
                 if status:
@@ -146,7 +146,7 @@ class ReportTable:
     def get_report_by_chat_id(self, chat_id: str) -> Optional[Report]:
         """根据会话ID获取关联的报告"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 return db.query(Report).filter(Report.chat_id == chat_id).first()
         except Exception as e:
             logger.error(f"Failed to get report by chat_id {chat_id}: {e}")
@@ -182,7 +182,7 @@ class ReportTable:
             更新后的Report对象
         """
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 report = db.query(Report).filter(
                     and_(Report.id == report_id, Report.user_id == user_id)
                 ).first()
@@ -238,7 +238,7 @@ class ReportTable:
     def update_outline(self, report_id: str, outline: dict) -> Optional[Report]:
         """仅更新章节大纲（不创建版本）"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 report = db.query(Report).filter(Report.id == report_id).first()
                 if report:
                     report.outline = outline
@@ -253,7 +253,7 @@ class ReportTable:
     def publish_report(self, report_id: str, user_id: str) -> Optional[Report]:
         """发布报告（状态变更为PUBLISHED）"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 report = db.query(Report).filter(
                     and_(Report.id == report_id, Report.user_id == user_id)
                 ).first()
@@ -298,7 +298,7 @@ class ReportTable:
             是否删除成功
         """
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 # 删除版本历史
                 db.query(ReportVersion).filter(ReportVersion.report_id == report_id).delete()
 
@@ -364,7 +364,7 @@ class ReportVersionTable:
     ) -> List[ReportVersion]:
         """获取报告的所有版本历史"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 return db.query(ReportVersion)\
                     .filter(ReportVersion.report_id == report_id)\
                     .order_by(desc(ReportVersion.version_number))\
@@ -381,7 +381,7 @@ class ReportVersionTable:
     ) -> Optional[ReportVersion]:
         """获取指定版本"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 return db.query(ReportVersion)\
                     .filter(
                         and_(

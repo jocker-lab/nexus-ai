@@ -18,7 +18,7 @@ from app.schemas.model_providers import (
     ProviderType,
     ModelType,
 )
-from app.database.db import get_db
+from app.database.db import get_db_context
 
 
 class ModelProviderTable:
@@ -40,7 +40,7 @@ class ModelProviderTable:
             创建的供应商配置，失败返回 None
         """
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 provider_id = str(uuid.uuid4())
                 now = int(time.time())
 
@@ -96,7 +96,7 @@ class ModelProviderTable:
             创建的供应商配置，失败返回 None
         """
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 provider_id = str(uuid.uuid4())
                 now = int(time.time())
 
@@ -143,7 +143,7 @@ class ModelProviderTable:
     def get_provider_by_id(self, provider_id: str) -> Optional[ModelProviderModel]:
         """根据 ID 获取供应商配置"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 provider = db.query(ModelProvider).filter(
                     ModelProvider.id == provider_id
                 ).first()
@@ -161,7 +161,7 @@ class ModelProviderTable:
     ) -> Optional[ModelProviderModel]:
         """根据 ID 和用户 ID 获取供应商配置（所有权验证）"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 provider = db.query(ModelProvider).filter(
                     ModelProvider.id == provider_id,
                     ModelProvider.user_id == user_id
@@ -180,7 +180,7 @@ class ModelProviderTable:
     ) -> List[ModelProviderModel]:
         """获取用户的所有供应商配置"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 query = db.query(ModelProvider).filter(
                     ModelProvider.user_id == user_id
                 )
@@ -201,7 +201,7 @@ class ModelProviderTable:
     ) -> List[ModelProviderModel]:
         """根据用户和供应商类型获取配置"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 query = db.query(ModelProvider).filter(
                     ModelProvider.user_id == user_id,
                     ModelProvider.provider_type == provider_type
@@ -223,7 +223,7 @@ class ModelProviderTable:
     ) -> Optional[ModelProviderModel]:
         """获取指定类型的默认供应商"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 provider = db.query(ModelProvider).filter(
                     ModelProvider.user_id == user_id,
                     ModelProvider.provider_type == provider_type,
@@ -246,7 +246,7 @@ class ModelProviderTable:
     ) -> Optional[ModelProviderModel]:
         """更新供应商配置"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 provider = db.query(ModelProvider).filter(
                     ModelProvider.id == provider_id,
                     ModelProvider.user_id == user_id
@@ -294,7 +294,7 @@ class ModelProviderTable:
     ) -> Optional[ModelProviderModel]:
         """更新 Ollama 供应商配置"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 provider = db.query(ModelProvider).filter(
                     ModelProvider.id == provider_id,
                     ModelProvider.user_id == user_id,
@@ -346,7 +346,7 @@ class ModelProviderTable:
     ) -> Optional[ModelProviderModel]:
         """更新供应商连接状态"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 provider = db.query(ModelProvider).filter(
                     ModelProvider.id == provider_id
                 ).first()
@@ -372,7 +372,7 @@ class ModelProviderTable:
     ) -> Optional[ModelProviderModel]:
         """切换供应商启用状态"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 provider = db.query(ModelProvider).filter(
                     ModelProvider.id == provider_id,
                     ModelProvider.user_id == user_id
@@ -399,7 +399,7 @@ class ModelProviderTable:
     ) -> Optional[ModelProviderModel]:
         """设置供应商为默认"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 provider = db.query(ModelProvider).filter(
                     ModelProvider.id == provider_id,
                     ModelProvider.user_id == user_id
@@ -431,7 +431,7 @@ class ModelProviderTable:
     def delete_provider(self, provider_id: str, user_id: str) -> bool:
         """删除供应商配置"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 result = db.query(ModelProvider).filter(
                     ModelProvider.id == provider_id,
                     ModelProvider.user_id == user_id
@@ -451,7 +451,7 @@ class ModelProviderTable:
     def delete_providers_by_user_id(self, user_id: str) -> bool:
         """删除用户的所有供应商配置"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 result = db.query(ModelProvider).filter(
                     ModelProvider.user_id == user_id
                 ).delete()

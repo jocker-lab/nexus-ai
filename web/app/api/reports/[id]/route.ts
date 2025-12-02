@@ -8,11 +8,20 @@ export async function GET(
   try {
     const { id: reportId } = await params
 
+    // 获取请求中的认证头
+    const authHeader = request.headers.get('Authorization')
+
+    // 构建请求头
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    }
+    if (authHeader) {
+      headers['Authorization'] = authHeader
+    }
+
     // 从后端API获取报告数据
     const response = await fetch(`${API_BASE_URL}/api/v1/reports/${reportId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       cache: 'no-store', // 不缓存，确保获取最新数据
     })
 

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useAuthStore } from '@/lib/stores/auth';
 
 // 预计算轨道节点位置（使用固定整数值避免 SSR/CSR hydration 不一致）
 // 角度: 0, 60, 120, 180, 240, 300 度，半径 100px
@@ -103,6 +104,8 @@ const StatCard = ({ value, label, delay }: { value: string; label: string; delay
 );
 
 export default function Home() {
+  const { isAuthenticated, user } = useAuthStore();
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Hero Section */}
@@ -220,25 +223,53 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.9 }}
           >
-            <Link href="/chat">
-              <button className="nexus-btn nexus-btn-primary px-8 py-4 text-base">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                开始对话
-              </button>
-            </Link>
-            <Link href="/reports">
-              <button className="nexus-btn nexus-btn-secondary px-8 py-4 text-base">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-                浏览报告
-              </button>
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link href="/chat">
+                  <button className="nexus-btn nexus-btn-primary px-8 py-4 text-base">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    开始对话
+                  </button>
+                </Link>
+                <Link href="/reports">
+                  <button className="nexus-btn nexus-btn-secondary px-8 py-4 text-base">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                    浏览报告
+                  </button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <button className="nexus-btn nexus-btn-primary px-8 py-4 text-base">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                      <polyline points="10 17 15 12 10 7" />
+                      <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                    登录系统
+                  </button>
+                </Link>
+                <Link href="/register">
+                  <button className="nexus-btn nexus-btn-secondary px-8 py-4 text-base">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="8.5" cy="7" r="4" />
+                      <line x1="20" y1="8" x2="20" y2="14" />
+                      <line x1="23" y1="11" x2="17" y2="11" />
+                    </svg>
+                    注册账号
+                  </button>
+                </Link>
+              </>
+            )}
           </motion.div>
 
           {/* Stats */}
@@ -498,7 +529,7 @@ export default function Home() {
           <p className="text-[var(--text-secondary)] mb-10 max-w-2xl mx-auto">
             立即体验 Nexus AI 的强大功能，让人工智能成为您研究工作的得力助手
           </p>
-          <Link href="/chat">
+          <Link href={isAuthenticated ? "/chat" : "/login"}>
             <motion.button
               className="nexus-btn nexus-btn-primary px-10 py-4 text-lg"
               whileHover={{ scale: 1.05 }}
@@ -507,7 +538,7 @@ export default function Home() {
               <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
-              立即开始
+              {isAuthenticated ? '立即开始' : '登录开始'}
             </motion.button>
           </Link>
         </motion.div>

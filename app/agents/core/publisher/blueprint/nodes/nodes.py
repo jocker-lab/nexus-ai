@@ -30,7 +30,7 @@ async def coordinator_step(state: PlanExecuteState) -> Command[Literal["planner"
     """
     协调器节点：与客户沟通并根据请求的清晰度路由任务
     """
-    messages = apply_prompt_template("coordinator", state)
+    messages = apply_prompt_template("publisher_prompts/coordinator", state)
     llm = init_chat_model("deepseek:deepseek-chat")
     response = await llm.with_structured_output(CoordinatorDecision).ainvoke(messages)
 
@@ -58,8 +58,8 @@ async def plan_step(state: PlanExecuteState):
 
     logger.info("📋 [PLANNER] 开始生成执行计划...")
 
-    llm = init_chat_model("deepseek:deepseek-reasoner")
-    messages = apply_prompt_template("planner/planner", state)
+    llm = init_chat_model("deepseek:deepseek-chat")
+    messages = apply_prompt_template("publisher_prompts/planner/planner", state)
     planner = llm.with_structured_output(Plan)
 
     plan = await planner.ainvoke(messages)

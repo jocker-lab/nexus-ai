@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { API_ENDPOINTS, buildUrl } from '@/lib/config'
+import { useAuthStore } from '@/lib/stores/auth'
+import { getAccessToken, getCurrentUserId, createAuthHeaders } from '@/lib/api'
 
 export interface Message {
   id: string
@@ -22,23 +24,22 @@ export interface ChatSession {
 
 export interface UseChatOptions {
   chatId?: string
-  userId?: string
   apiUrl?: string
   onError?: (error: Error) => void
   onSessionCreated?: (chatId: string) => void
 }
 
-// 默认用户ID - 需要与 useModelProviders 保持一致
-const DEFAULT_USER_ID = 'user-123'
-
 export function useChat(options: UseChatOptions = {}) {
   const {
     chatId: initialChatId,
-    userId = DEFAULT_USER_ID, // 应该从用户认证系统获取
     apiUrl = API_ENDPOINTS.chatStream,
     onError,
     onSessionCreated
   } = options
+
+  // 从认证 store 获取用户 ID
+  const { user } = useAuthStore()
+  const userId = user?.id || ''
 
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -65,7 +66,9 @@ export function useChat(options: UseChatOptions = {}) {
   const loadMessages = useCallback(async (chatId: string) => {
     try {
       const url = buildUrl(`${API_ENDPOINTS.chats}/${chatId}/messages`, { user_id: userId })
-      const response = await fetch(url)
+      const response = await fetch(url, {
+        headers: createAuthHeaders(),
+      })
       if (response.ok) {
         const data = await response.json()
         const loadedMessages: Message[] = data.messages.map((msg: any) => ({
@@ -132,9 +135,7 @@ export function useChat(options: UseChatOptions = {}) {
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify({
           message: content.trim(),
           chat_id: chatId || undefined, // 如果没有chatId，后端会自动创建
