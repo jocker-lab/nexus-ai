@@ -18,7 +18,7 @@ from typing import List, Dict, Optional, Tuple
 class SentimentEmbeddingClient:
     """舆情向量嵌入客户端，用于向 FastAPI 服务请求文本嵌入向量。"""
 
-    def __init__(self, base_url: str = "http://117.83.83.32:8090", timeout: int = 30, retries: int = 3):
+    def __init__(self, base_url: str = "http://117.83.83.32:8090", timeout: int = 90, retries: int = 4):
         """
         初始化舆情向量嵌入客户端。
 

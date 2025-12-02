@@ -3,6 +3,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 
 from app.database.minio_db import get_minio_client
 from app.service.file_tasks import process_template_file
+from app.curd.templates import Templates
 
 from app.api.endpoints import chats, folders, reports
 from loguru import logger
@@ -88,6 +89,30 @@ async def upload_file(file: UploadFile = File(...), user_id: str = "default_user
     except Exception as e:
         logger.error(f"File upload failed: {e}")
         raise HTTPException(status_code=500, detail=f"文件上传失败: {str(e)}")
+
+
+@app.get("/api/v1/templates/{template_id}")
+async def get_template_detail(template_id: str):
+    """
+    获取模版详情
+
+    Args:
+        template_id: 模版ID
+
+    Returns:
+        模版的 summary 和 sections 信息
+    """
+    template = Templates.get_template_by_id(template_id)
+
+    if not template:
+        raise HTTPException(status_code=404, detail="模版不存在")
+
+    return {
+        "template_id": template.id,
+        "title": template.title,
+        "summary": template.summary,
+        "sections": template.sections,
+    }
 
 
 
