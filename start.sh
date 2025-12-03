@@ -139,16 +139,39 @@ start_backend() {
 
     echo $! > "$BACKEND_PID_FILE"
 
-    sleep 2
+    # 等待后端启动（增加重试机制）
+    print_info "等待后端服务启动..."
+    local max_retries=10
+    local retry=0
+    while [ $retry -lt $max_retries ]; do
+        sleep 1
+        if check_port $BACKEND_PORT; then
+            print_success "后端服务启动成功"
+            print_info "后端地址: http://localhost:$BACKEND_PORT"
+            print_info "API 文档: http://localhost:$BACKEND_PORT/docs"
+            return 0
+        fi
+        # 检查日志中是否有 "Uvicorn running" 标志
+        if grep -q "Uvicorn running\|Application startup complete" "$LOG_DIR/backend.log" 2>/dev/null; then
+            print_success "后端服务启动成功"
+            print_info "后端地址: http://localhost:$BACKEND_PORT"
+            print_info "API 文档: http://localhost:$BACKEND_PORT/docs"
+            return 0
+        fi
+        retry=$((retry + 1))
+        print_info "等待中... ($retry/$max_retries)"
+    done
 
-    if check_port $BACKEND_PORT; then
-        print_success "后端服务启动成功"
+    # 最终检查
+    if grep -q "Uvicorn running\|Application startup complete" "$LOG_DIR/backend.log" 2>/dev/null; then
+        print_success "后端服务启动成功 (通过日志确认)"
         print_info "后端地址: http://localhost:$BACKEND_PORT"
         print_info "API 文档: http://localhost:$BACKEND_PORT/docs"
-    else
-        print_error "后端服务启动失败，请检查日志: $LOG_DIR/backend.log"
-        return 1
+        return 0
     fi
+
+    print_error "后端服务启动失败，请检查日志: $LOG_DIR/backend.log"
+    return 1
 }
 
 # 启动前端服务
@@ -174,15 +197,36 @@ start_frontend() {
 
     echo $! > "$FRONTEND_PID_FILE"
 
-    sleep 3
+    # 等待前端启动（Next.js 启动较慢，增加重试机制）
+    print_info "等待前端服务启动..."
+    local max_retries=10
+    local retry=0
+    while [ $retry -lt $max_retries ]; do
+        sleep 1
+        if check_port $FRONTEND_PORT; then
+            print_success "前端服务启动成功"
+            print_info "前端地址: http://localhost:$FRONTEND_PORT"
+            return 0
+        fi
+        # 检查日志中是否有 "Ready" 标志
+        if grep -q "Ready in" "$LOG_DIR/frontend.log" 2>/dev/null; then
+            print_success "前端服务启动成功"
+            print_info "前端地址: http://localhost:$FRONTEND_PORT"
+            return 0
+        fi
+        retry=$((retry + 1))
+        print_info "等待中... ($retry/$max_retries)"
+    done
 
-    if check_port $FRONTEND_PORT; then
-        print_success "前端服务启动成功"
+    # 最终检查：即使端口检测失败，如果日志显示成功也算成功
+    if grep -q "Ready in" "$LOG_DIR/frontend.log" 2>/dev/null; then
+        print_success "前端服务启动成功 (通过日志确认)"
         print_info "前端地址: http://localhost:$FRONTEND_PORT"
-    else
-        print_error "前端服务启动失败，请检查日志: $LOG_DIR/frontend.log"
-        return 1
+        return 0
     fi
+
+    print_error "前端服务启动失败，请检查日志: $LOG_DIR/frontend.log"
+    return 1
 }
 
 # 停止服务
