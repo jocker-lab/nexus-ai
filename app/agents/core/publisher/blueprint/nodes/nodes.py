@@ -107,6 +107,16 @@ async def plan_step(state: PlanExecuteState):
 
     llm = init_chat_model("deepseek:deepseek-chat")
     messages = apply_prompt_template("publisher_prompts/planner/planner", state)
+
+    # 🔍 DEBUG: 打印当前使用的 planner prompt
+    logger.info("=" * 60)
+    logger.info("🔍 [PLANNER DEBUG] 当前使用的 Prompt:")
+    logger.info("=" * 60)
+    if messages and len(messages) > 0:
+        system_msg = messages[0].content if hasattr(messages[0], 'content') else str(messages[0])
+        logger.info(f"{system_msg[:2000]}...")
+    logger.info("=" * 60)
+
     planner = llm.with_structured_output(Plan)
 
     plan = await planner.ainvoke(messages)
