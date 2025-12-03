@@ -21,6 +21,7 @@ from app.config import (
     MINIO_ACCESS_KEY,
     MINIO_SECRET_KEY,
     MINIO_BUCKET,
+    MINIO_PENDING_BUCKET,
     MINIO_SECURE,
 )
 
@@ -32,6 +33,7 @@ class MinIOClient:
         """初始化MinIO客户端"""
         self.client: Optional[Minio] = None
         self.bucket_name: str = MINIO_BUCKET
+        self.pending_bucket_name: str = MINIO_PENDING_BUCKET
         self._initialized = False
 
     def initialize(self):
@@ -53,6 +55,7 @@ class MinIOClient:
 
             # 确保bucket存在
             self._ensure_bucket_exists()
+            self._ensure_pending_bucket_exists()
 
             self._initialized = True
             logger.info(f"MinIO client initialized successfully: {MINIO_ENDPOINT}/{self.bucket_name}")
@@ -71,6 +74,18 @@ class MinIOClient:
                 logger.debug(f"MinIO bucket already exists: {self.bucket_name}")
         except S3Error as e:
             logger.error(f"Error checking/creating bucket: {e}")
+            raise
+
+    def _ensure_pending_bucket_exists(self):
+        """确保pending bucket存在，不存在则创建"""
+        try:
+            if not self.client.bucket_exists(self.pending_bucket_name):
+                self.client.make_bucket(self.pending_bucket_name)
+                logger.info(f"Created MinIO pending bucket: {self.pending_bucket_name}")
+            else:
+                logger.debug(f"MinIO pending bucket already exists: {self.pending_bucket_name}")
+        except S3Error as e:
+            logger.error(f"Error checking/creating pending bucket: {e}")
             raise
 
     def upload_chart(
@@ -231,6 +246,113 @@ class MinIOClient:
         except S3Error as e:
             logger.error(f"Failed to delete report charts: {e}")
             return 0
+
+    def upload_pending_file(
+        self,
+        file_data: bytes,
+        task_id: str,
+        filename: str,
+        content_type: str = "application/octet-stream"
+    ) -> dict:
+        """
+        上传待处理文件到pending bucket
+
+        Args:
+            file_data: 文件的二进制数据
+            task_id: 任务ID，用于组织文件路径
+            filename: 文件名
+            content_type: MIME类型
+
+        Returns:
+            dict: {"object_name": "...", "url": "http://..."}
+        """
+        if not self._initialized:
+            self.initialize()
+
+        try:
+            # 构造对象路径: {task_id}/{filename}
+            object_name = f"{task_id}/{filename}"
+
+            # 创建字节流
+            file_stream = io.BytesIO(file_data)
+            file_size = len(file_data)
+
+            # 上传文件到pending bucket
+            self.client.put_object(
+                bucket_name=self.pending_bucket_name,
+                object_name=object_name,
+                data=file_stream,
+                length=file_size,
+                content_type=content_type
+            )
+
+            # 生成访问URL
+            url = self._get_pending_object_url(object_name)
+
+            logger.info(f"Uploaded pending file to MinIO: {url}")
+            return {"object_name": object_name, "url": url}
+
+        except S3Error as e:
+            logger.error(f"Failed to upload pending file to MinIO: {e}")
+            raise
+
+    def _get_pending_object_url(self, object_name: str) -> str:
+        """获取pending bucket对象的访问URL"""
+        endpoint = self.client._base_url._url.netloc
+        scheme = "https" if self.client._base_url._url.scheme == "https" else "http"
+        return f"{scheme}://{endpoint}/{self.pending_bucket_name}/{object_name}"
+
+    def delete_pending_file(self, object_name: str) -> bool:
+        """
+        删除pending bucket中的文件
+
+        Args:
+            object_name: 对象名称
+
+        Returns:
+            bool: 删除是否成功
+        """
+        if not self._initialized:
+            self.initialize()
+
+        try:
+            self.client.remove_object(
+                bucket_name=self.pending_bucket_name,
+                object_name=object_name
+            )
+            logger.info(f"Deleted pending file from MinIO: {object_name}")
+            return True
+
+        except S3Error as e:
+            logger.error(f"Failed to delete pending file from MinIO: {e}")
+            return False
+
+    def get_pending_file(self, object_name: str) -> bytes:
+        """
+        从pending bucket获取文件内容
+
+        Args:
+            object_name: 对象名称
+
+        Returns:
+            bytes: 文件内容
+        """
+        if not self._initialized:
+            self.initialize()
+
+        try:
+            response = self.client.get_object(
+                bucket_name=self.pending_bucket_name,
+                object_name=object_name
+            )
+            data = response.read()
+            response.close()
+            response.release_conn()
+            return data
+
+        except S3Error as e:
+            logger.error(f"Failed to get pending file from MinIO: {e}")
+            raise
 
 
 # 全局单例

@@ -25,4 +25,6 @@ class PlanExecuteState(TypedDict):
     completed_steps: Annotated[List[StepExecution], operator.add]
     blueprint_draft: str
     response: str
+    # 模版相关
+    matched_template: dict  # 用户确认后的匹配模版，None 表示无匹配或用户拒绝
 

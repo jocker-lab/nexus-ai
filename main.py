@@ -1,21 +1,14 @@
-import re
-import time
-import json
-from langgraph_sdk import get_client
-from pydantic import BaseModel
-from fastapi import FastAPI, Request, HTTPException
-from langchain_deepseek import ChatDeepSeek
-from langchain_openai import ChatOpenAI
-from fastapi.responses import StreamingResponse
-from typing import AsyncGenerator, Dict
+import uuid
+from fastapi import FastAPI, HTTPException, UploadFile, File
 
-from app.config import LOCAL_BIG_MODEL_PARAMS, settings
+from app.database.minio_db import get_minio_client
+from app.service.file_tasks import process_template_file
+from app.curd.templates import Templates
 
 from app.api.endpoints import chats, folders, reports, model_providers
 from loguru import logger
 # from langchain.prompts import ChatPromptTemplate
 # from app.core.prompts.chart_generate_prompt import CHART_GENERATE_PROMPTS
-from langchain_core.output_parsers import JsonOutputParser
 from fastapi.middleware.cors import CORSMiddleware
 
 # from app.core.agents.system_assistant_agent.src.agent.graph import SystemAssistantAgent
@@ -45,6 +38,83 @@ app.include_router(model_providers.router, prefix="/api/v1/model-providers", tag
 @app.get("/")
 def read_root():
     return {"message": "Welcome to LangGraph API Service!"}
+
+
+@app.post("/api/v1/upload")
+async def upload_file(file: UploadFile = File(...), user_id: str = "default_user"):
+    """
+    上传文件接口
+
+    文件会被存储到 MinIO pending bucket，后续由 Celery 异步处理
+
+    Args:
+        file: 上传的文件
+        user_id: 用户ID（可选，默认 default_user）
+    """
+    try:
+        # 生成唯一的任务ID
+        task_id = str(uuid.uuid4())
+
+        # 读取文件内容
+        file_data = await file.read()
+
+        # 上传到 MinIO pending bucket
+        minio_client = get_minio_client()
+        upload_result = minio_client.upload_pending_file(
+            file_data=file_data,
+            task_id=task_id,
+            filename=file.filename,
+            content_type=file.content_type or "application/octet-stream"
+        )
+
+        logger.info(f"File uploaded successfully: {file.filename}, task_id: {task_id}, url: {upload_result['url']}")
+
+        # 发送 Celery 任务
+        process_template_file.delay(
+            task_id=task_id,
+            file_url=upload_result["url"],
+            object_name=upload_result["object_name"],
+            filename=file.filename,
+            user_id=user_id,
+        )
+
+        logger.info(f"Celery task dispatched: {task_id}")
+
+        return {
+            "success": True,
+            "task_id": task_id,
+            "filename": file.filename,
+            "url": upload_result["url"],
+            "message": "文件上传成功，正在后台处理"
+        }
+
+    except Exception as e:
+        logger.error(f"File upload failed: {e}")
+        raise HTTPException(status_code=500, detail=f"文件上传失败: {str(e)}")
+
+
+@app.get("/api/v1/templates/{template_id}")
+async def get_template_detail(template_id: str):
+    """
+    获取模版详情
+
+    Args:
+        template_id: 模版ID
+
+    Returns:
+        模版的 summary 和 sections 信息
+    """
+    template = Templates.get_template_by_id(template_id)
+
+    if not template:
+        raise HTTPException(status_code=404, detail="模版不存在")
+
+    return {
+        "template_id": template.id,
+        "title": template.title,
+        "summary": template.summary,
+        "sections": template.sections,
+    }
 
 
 
