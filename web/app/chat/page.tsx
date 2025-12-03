@@ -2215,7 +2215,6 @@ export default function ChatPage() {
     switchChat
   } = useChat({
     chatId: selectedChatId,
-    userId,
     apiUrl: API_ENDPOINTS.chatStream,
     onError: (error) => console.error('Chat error:', error),
     onSessionCreated: () => loadSessions()
@@ -2232,7 +2231,6 @@ export default function ChatPage() {
     cloneSession,
     downloadSession
   } = useChatSessions({
-    userId,
     onError: (error) => console.error('Sessions error:', error)
   });
 
