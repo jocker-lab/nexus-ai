@@ -30,8 +30,8 @@ router = APIRouter()
 # 系统提示词
 SYSTEM_PROMPT = "你是一个友好、专业的AI助手。请用简洁、准确的语言回答用户的问题。"
 
-@router.get("/", response_model=list[ChatTitleIdResponse])
-@router.get("/list", response_model=list[ChatTitleIdResponse])
+@router.get("", response_model=list[ChatTitleIdResponse])
+@router.get("/list", response_model=list[ChatTitleIdResponse], include_in_schema=False)
 async def get_session_user_chat_list(user_id: str, page: Optional[int] = None):
     if page is not None:
         limit = 60
@@ -41,7 +41,7 @@ async def get_session_user_chat_list(user_id: str, page: Optional[int] = None):
         return Chats.get_chat_title_id_list_by_user_id(user_id)
 
 
-@router.delete("/", response_model=bool)
+@router.delete("", response_model=bool)
 async def delete_all_user_chats(user_id: str):
     result = Chats.delete_chats_by_user_id(user_id)
     return result

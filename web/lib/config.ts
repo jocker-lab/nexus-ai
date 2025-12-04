@@ -9,30 +9,30 @@
 // Next.js rewrites 会自动将 /api/v1/* 请求代理到后端
 export const API_BASE_URL = ''
 
-// API 端点（相对路径，带尾部斜杠以匹配 FastAPI 路由）
+// API 端点（相对路径，不带尾部斜杠）
 export const API_ENDPOINTS = {
   // 认证相关
   auth: '/api/v1/auth',
 
   // 用户管理
-  users: '/api/v1/users/',
-  groups: '/api/v1/groups/',
-  roles: '/api/v1/roles/',
+  users: '/api/v1/users',
+  groups: '/api/v1/groups',
+  roles: '/api/v1/roles',
 
   // Chat 相关
-  chats: '/api/v1/chats/',
-  chatStream: '/api/v1/chats/stream/',
+  chats: '/api/v1/chats',
+  chatStream: '/api/v1/chats/stream',
 
   // Documents 相关 (原 Reports)
-  documents: '/api/v1/documents/',
+  documents: '/api/v1/documents',
   // 兼容性别名
-  reports: '/api/v1/documents/',
+  reports: '/api/v1/documents',
 
   // Model Providers 相关
-  modelProviders: '/api/v1/model-providers/',
+  modelProviders: '/api/v1/model-providers',
 
   // Writing Templates 相关
-  writingTemplates: '/api/v1/writing-templates/',
+  writingTemplates: '/api/v1/writing-templates',
 } as const
 
 // 构建带查询参数的 URL
