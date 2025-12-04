@@ -1,6 +1,7 @@
 """
 Chapter Content Generation Nodes - Iterative Chapter Generation Implementation
 """
+import os
 from dotenv import load_dotenv
 from langchain_deepseek import ChatDeepSeek
 from loguru import logger
@@ -191,10 +192,15 @@ async def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
     writing_style = getattr(document_outline, "writing_style", "") if document_outline else ""
     language = getattr(document_outline, "language", "Chinese") if document_outline else "Chinese"
 
-    logger.info(f"  ✍️  [Chapter {chapter_id}] Writing draft (iteration {iteration + 1})...")
-    logger.info(f"    ↳ Writer role: {writer_role}")
-    if visual_elements:
-        logger.info(f"    ↳ Chart generation enabled")
+    # ==================== 章节写作日志 ====================
+    logger.info("")
+    logger.info("=" * 80)
+    logger.info(f"📝 [WRITE_NODE] Chapter {chapter_id}: {chapter_title}")
+    logger.info("=" * 80)
+    logger.info(f"  📋 Iteration: {iteration + 1}")
+    logger.info(f"  👤 Writer: {writer_role}")
+    logger.info(f"  📊 Chart generation: {'✅ Enabled' if visual_elements else '❌ Disabled'}")
+    logger.info(f"  🎯 Target words: {target_word_count}")
 
     # Initialize LLM
     llm = init_chat_model("deepseek:deepseek-chat")
@@ -241,9 +247,25 @@ async def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
     agent = create_agent(model=llm, tools=[generate_chart], system_prompt=system_prompt)
 
     try:
-        logger.info(f"    ↳ Starting Agent (with chart generation capability)...")
-        logger.info(f"    ↳ User input: {system_prompt}")
-        logger.info(f"    ↳ User input: {user_prompt}")
+        logger.info("-" * 80)
+        logger.info(f"📤 [PROMPT] Chapter {chapter_id}: {chapter_title}")
+        logger.info("-" * 80)
+        logger.info(f"  🔧 System Prompt ({len(system_prompt)} chars):")
+        # 只打印前500字符，避免日志过长
+        system_preview = system_prompt[:500] + "..." if len(system_prompt) > 500 else system_prompt
+        for line in system_preview.split('\n')[:10]:  # 只显示前10行
+            logger.info(f"    | {line}")
+        if len(system_prompt) > 500:
+            logger.info(f"    | ... (truncated, total {len(system_prompt)} chars)")
+        logger.info("")
+        logger.info(f"  📝 User Prompt ({len(user_prompt)} chars):")
+        user_preview = user_prompt[:500] + "..." if len(user_prompt) > 500 else user_prompt
+        for line in user_preview.split('\n')[:10]:  # 只显示前10行
+            logger.info(f"    | {line}")
+        if len(user_prompt) > 500:
+            logger.info(f"    | ... (truncated, total {len(user_prompt)} chars)")
+        logger.info("-" * 80)
+        logger.info(f"🚀 Starting Agent for Chapter {chapter_id}...")
 
         response = await agent.ainvoke(
             {"messages": [{"role": "user", "content": user_prompt}]},
@@ -254,16 +276,29 @@ async def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
         ai_messages = [m for m in response["messages"] if isinstance(m, AIMessage) and m.content]
 
         if ai_messages:
-            new_draft = ai_messages[-1].content.strip()
+            new_draft = "\n\n".join(m.content.strip() for m in ai_messages)
         else:
             raise ValueError("Agent did not return valid content")
 
 
-        logger.info(f"    ✓ Draft length: {len(new_draft)} characters")
-        logger.info(f"    ✓ Charts generated: {new_draft.count('![')}")
+        logger.info("-" * 80)
+        logger.info(f"📥 [RESULT] Chapter {chapter_id}: {chapter_title}")
+        logger.info("-" * 80)
+        logger.info(f"  ✅ Draft length: {len(new_draft)} characters")
+        logger.info(f"  📊 Charts generated: {new_draft.count('![')}")
+        # 显示结果预览
+        logger.info(f"  📄 Content preview:")
+        draft_preview = new_draft[:300] + "..." if len(new_draft) > 300 else new_draft
+        for line in draft_preview.split('\n')[:8]:  # 只显示前8行
+            logger.info(f"    | {line[:80]}")  # 每行最多80字符
+        if len(new_draft) > 300:
+            logger.info(f"    | ... (truncated, total {len(new_draft)} chars)")
+        logger.info("=" * 80)
+        logger.info("")
 
-        logger.info(f"draft content: \n"
-                    f"{new_draft}")
+        # 完整内容输出（用于调试，可通过环境变量 LOG_FULL_DRAFT=true 控制）
+        if os.getenv("LOG_FULL_DRAFT", "false").lower() == "true":
+            logger.debug(f"[FULL_DRAFT] Chapter {chapter_id}: {chapter_title}\n{new_draft}")
 
         return {
             "draft": new_draft,
@@ -272,7 +307,11 @@ async def write_node(state: ChapterIterativeState) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"    ⚠️  Writing failed: {e}")
+        logger.error("")
+        logger.error("=" * 80)
+        logger.error(f"❌ [ERROR] Chapter {chapter_id}: {chapter_title}")
+        logger.error("=" * 80)
+        logger.error(f"  ⚠️ Writing failed: {e}")
         import traceback
         traceback.print_exc()
         fallback_draft = draft if draft else f"# {chapter_title}\n\nWriting failed: {str(e)}"

@@ -38,11 +38,11 @@ class DocumentState(TypedDict):
 
     # ========== Document Integrator 输出 ==========
     document: str  # 整合后的完整文档内容
-    document_metadata: Dict[str, Any]  # 文档统计信息(字数、章节数、生成耗时等)
 
-    # ========== Document Reviewer 输出 ==========
-    latest_review: Any  # 最新审查结果 (ReviewResult)
-    revision_count: int  # 修订次数
-    document_review: Dict[str, Any]  # 最终审查摘要 (用于输出)
+    # ========== Document Finalizer 输出 ==========
+    # 文档元数据（由 LLM with_structured_output 提取）
+    # 包含: title, description, category, tags, word_count,
+    #       estimated_reading_time, key_insights, target_audience, status
+    document_metadata: Dict[str, Any]
 
 

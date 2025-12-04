@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
+import { API_BASE_URL } from '@/lib/config'
 
 export async function GET(
   request: NextRequest,
@@ -9,11 +8,20 @@ export async function GET(
   try {
     const { id: reportId } = await params
 
+    // 获取请求中的认证头
+    const authHeader = request.headers.get('Authorization')
+
+    // 构建请求头
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    }
+    if (authHeader) {
+      headers['Authorization'] = authHeader
+    }
+
     // 从后端API获取报告数据
-    const response = await fetch(`${BACKEND_URL}/api/v1/reports/${reportId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const response = await fetch(`${API_BASE_URL}/api/v1/reports/${reportId}`, {
+      headers,
       cache: 'no-store', // 不缓存，确保获取最新数据
     })
 

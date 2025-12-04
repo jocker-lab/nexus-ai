@@ -3,12 +3,12 @@ from typing import Optional
 from loguru import logger
 from app.schemas.tags import TagModel
 from app.models.tags import Tag
-from app.database.db import get_db
+from app.database.db import get_db_context
 
 
 class TagTable:
     def insert_new_tag(self, name: str, user_id: str) -> Optional[TagModel]:
-        with get_db() as db:
+        with get_db_context() as db:
             id = name.replace(" ", "_").lower()
             tag = TagModel(**{"id": id, "user_id": user_id, "name": name})
             try:
@@ -27,21 +27,21 @@ class TagTable:
     def get_tag_by_name_and_user_id(self, name: str, user_id: str) -> Optional[TagModel]:
         try:
             id = name.replace(" ", "_").lower()
-            with get_db() as db:
+            with get_db_context() as db:
                 tag = db.query(Tag).filter_by(id=id, user_id=user_id).first()
                 return TagModel.model_validate(tag)
         except Exception:
             return None
 
     def get_tags_by_user_id(self, user_id: str) -> list[TagModel]:
-        with get_db() as db:
+        with get_db_context() as db:
             return [
                 TagModel.model_validate(tag)
                 for tag in (db.query(Tag).filter_by(user_id=user_id).all())
             ]
 
     def get_tags_by_ids_and_user_id(self, ids: list[str], user_id: str) -> list[TagModel]:
-        with get_db() as db:
+        with get_db_context() as db:
             return [
                 TagModel.model_validate(tag)
                 for tag in (
@@ -51,7 +51,7 @@ class TagTable:
 
     def delete_tag_by_name_and_user_id(self, name: str, user_id: str) -> bool:
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 id = name.replace(" ", "_").lower()
                 res = db.query(Tag).filter_by(id=id, user_id=user_id).delete()
                 logger.debug(f"res: {res}")

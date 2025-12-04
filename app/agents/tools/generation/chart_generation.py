@@ -35,7 +35,7 @@ def get_sandbox():
 
 
 @tool
-def generate_chart(code: str, report_id: str = None) -> dict:
+def generate_chart(code: str, document_id: str = None) -> dict:
     """
     在安全的 Docker 容器中执行绘图代码并上传到 MinIO。
 
@@ -77,10 +77,10 @@ def generate_chart(code: str, report_id: str = None) -> dict:
 
     **参数：**
     - code: 完整的 Python 绘图代码
-    - report_id: 报告ID（可选，默认为 'temp'）
+    - document_id: 文档ID（可选，默认为 'temp'）
 
     **返回：**
-    - MinIO 图片 URL (例如: http://localhost:9000/nexus-reports/reports/123/charts/chart_abc.png)
+    - MinIO 图片 URL (例如: http://localhost:9000/nexus-documents/documents/123/charts/chart_abc.png)
 
     **异常：**
     - ValueError: 代码执行失败或输出格式错误
@@ -120,12 +120,12 @@ def generate_chart(code: str, report_id: str = None) -> dict:
     # 生成文件名并上传
     chart_id = str(uuid.uuid4())[:8]
     filename = f"chart_{chart_id}.png"
-    report_id = report_id or "temp"
+    document_id = document_id or "temp"
 
     try:
         minio_url = upload_chart(
             file_data=image_data,
-            report_id=report_id,
+            document_id=document_id,
             filename=filename,
             content_type="image/png"
         )

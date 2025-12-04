@@ -1,161 +1,68 @@
-## Writing Task
+# Writing Task: Chapter {{ chapter_id }}
 
-Complete {% if revision_needed %}revision{% else %}writing{% endif %} of **Chapter {{ chapter_id }}** for "{{ document_outline.title }}".
-
----
-
-## Document Information
-
-| Item | Content |
-|------|---------|
-| Target Audience | {{ document_outline.target_audience }} |
-| Writing Style | {{ document_outline.writing_style }} |
-| Tone | {{ document_outline.writing_tone }} |
-| Core Purpose | {{ document_outline.writing_purpose }} |
-| Language | {{ document_outline.language }} |
-{% if document_outline.key_themes and document_outline.key_themes|length > 0 %}
-| Key Themes | {{ document_outline.key_themes|join(', ') }} |
-{% endif %}
+You are writing **Chapter {{ chapter_id }}: {{ chapter_outline.title }}** for the document "{{ document_outline.title }}".
 
 ---
 
-## Chapter Context
-
-This document contains {{ document_outline.sections|length }} chapters. You are writing **Chapter {{ chapter_id }}**.
-
-{% if chapter_id > 1 %}
-**Previous Chapter**: {{ document_outline.sections[chapter_id - 2].title }}
-{% if document_outline.sections[chapter_id - 2].subsections %}
-{% for subsec in document_outline.sections[chapter_id - 2].subsections %}- {{ subsec.sub_section_title }}
-{% endfor %}{% endif %}
-{% endif %}
-
-**Current Chapter**: {{ chapter_outline.title }}
-{% if chapter_outline.subsections %}
-{% for subsec in chapter_outline.subsections %}- {{ subsec.sub_section_title }}
-{% endfor %}{% endif %}
-
-{% if chapter_id < document_outline.sections|length %}
-**Next Chapter**: {{ document_outline.sections[chapter_id].title }}
-{% if document_outline.sections[chapter_id].subsections %}
-{% for subsec in document_outline.sections[chapter_id].subsections %}- {{ subsec.sub_section_title }}
-{% endfor %}{% endif %}
-{% endif %}
+## 1. Context & Scope
+<info>
+* **Purpose**: {{ document_outline.writing_purpose }}
+* **Time**: {{ CURRENT_TIME }}
+</info>
 
 ---
 
-## Chapter Requirements
+## 2. Structure Requirements
+**Target Length**: ~{{ target_word_count }} words.
 
-**Title**: {{ chapter_outline.title }}
-
-**Positioning**: {{ chapter_outline.description }}
-
-**Word Count**: {{ target_word_count }} words (±10% tolerance: {{ (chapter_outline.estimated_words * 0.9)|int }} - {{ (chapter_outline.estimated_words * 1.1)|int }} words)
-
-{% if chapter_outline.writing_guidance %}
-**Writing Guidance**: {{ chapter_outline.writing_guidance }}
-{% endif %}
-
-{% if chapter_outline.content_requirements %}
-**Content Requirements**: {{ chapter_outline.content_requirements }}
-{% endif %}
-
-{% if chapter_outline.visual_elements %}
-**Visualization**: Use `generate_chart` tool to create data visualizations
-{% endif %}
-
-{% if chapter_outline.subsections and chapter_outline.subsections|length > 0 %}
-### Subsection Structure
-
-Complete the following {{ chapter_outline.subsections|length }} subsections in order:
-
+<subsection_plan>
 {% for subsec in chapter_outline.subsections %}
-{{ loop.index }}. **{{ subsec.sub_section_title }}**{% if subsec.estimated_word_count %} (~{{ subsec.estimated_word_count }} words){% endif %}
-{% if subsec.description %}   {{ subsec.description }}{% endif %}
-{% if subsec.writing_guidance %}   Guidance: {{ subsec.writing_guidance }}{% endif %}
-
+### {{ loop.index }}. {{ subsec.sub_section_title }}
+* **Guidance**: {{ subsec.description }}
 {% endfor %}
-
-> ⚠️ Follow the exact subsection structure above. Do NOT add extra subsections (e.g., "Conclusion", "Summary"). Do NOT skip any subsection.
-{% endif %}
+</subsection_plan>
 
 ---
 
-{% if revision_needed and draft %}
-## Current Draft
+## 3. Reference Materials
+<instruction>
+Use the materials below. Keep URLs for the References section.
+</instruction>
 
-The following is your previous draft that needs improvement based on new search results:
-
-<current_draft>
-{{ draft }}
-</current_draft>
-
----
-
-## New Search Results
-
-Use these new materials to supplement and improve the draft above:
-
-<materials>
+<search_results>
 {{ search_results_text }}
-</materials>
+</search_results>
 
 ---
 
-## Focus Areas
-
-1. Supplement the missing or weak areas with new information
-2. Integrate new content seamlessly into the existing draft
-3. Ensure all content requirements are well-covered
-4. Maintain paragraph quality (3-4 sentences minimum)
-5. Add source references for new content
-{% if visual_elements %}
-6. Add or update charts to visualize key data using `generate_chart` tool
-{% endif %}
-
-{% elif search_results_text %}
-
-## Research Materials
-
-Cite selectively, integrate into argumentation, avoid info-dumping:
-
-<materials>
-{{ search_results_text }}
-</materials>
-{% endif %}
+## 4. Final Checklist
+1.  **Start with Title**: The response **MUST** begin with `## {{ chapter_outline.title }}`.
+2.  **Chart Position**: Charts must appear **inside** the relevant subsections, NOT at the top of the file.
+3.  **Tool Output**: When `generate_chart` returns a JSON, extract the URL and embed it.
 
 ---
 
-## Constraints
+## 5. Response Output (Mandatory Template)
 
-1. Word count MUST be within {{ (chapter_outline.estimated_words * 0.9)|int }} - {{ (chapter_outline.estimated_words * 1.1)|int }} range
-2. Ensure smooth transitions with adjacent chapters
-3. Facts must be accurate; content must be original
-4. **MANDATORY**: End the chapter with a "### References" section listing all sources used
-{% if revision_needed %}
-5. **IMPORTANT**: Focus on supplementing weak areas with new search results
-6. Integrate new content seamlessly - do not simply append
-7. Preserve good content from the original draft
-{% endif %}
-{% if visual_elements %}
-- Do NOT output Python code or tool invocation details in the final content
-{% endif %}
+**Instruction**: You MUST strictly follow the structure below. Fill in the content where indicated.
 
----
-
-## Expected Output Structure
-
-```
+```markdown
 ## {{ chapter_outline.title }}
 
-[Chapter content with subsections...]
+[Write a brief introduction to the chapter here (100-200 words)...]
+
+### 1. （一）[Subsection 1 Title]
+[Write content for subsection 1...]
+[If a chart is needed, insert it here: ![Title](url)]
+
+### 2. （二）[Subsection 2 Title]
+[Write content for subsection 2...]
+
+... [Continue for all subsections] ...
 
 ### References
-
-1. [Source Title](URL). *Source Name*.
-2. [Source Title](URL). *Source Name*.
+- [Source 1](url)
+- [Source 2](url)
 ```
 
----
-
-Output {% if revision_needed %}the improved{% endif %} chapter content directly in Markdown format.
+**Action**: Fill the template above to generate the complete chapter content.

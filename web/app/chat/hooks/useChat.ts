@@ -1,4 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { API_ENDPOINTS, buildUrl } from '@/lib/config'
+import { useAuthStore } from '@/lib/stores/auth'
+import { getAccessToken, getCurrentUserId, createAuthHeaders } from '@/lib/api'
 
 export interface Message {
   id: string
@@ -6,6 +9,10 @@ export interface Message {
   content: string
   loading?: boolean
   timestamp: number
+  // 推理模型思考过程
+  thinking?: string
+  thinkingDuration?: number // 思考耗时（秒）
+  isThinking?: boolean // 是否正在思考中
 }
 
 export interface ChatSession {
@@ -17,7 +24,6 @@ export interface ChatSession {
 
 export interface UseChatOptions {
   chatId?: string
-  userId?: string
   apiUrl?: string
   onError?: (error: Error) => void
   onSessionCreated?: (chatId: string) => void
@@ -26,11 +32,14 @@ export interface UseChatOptions {
 export function useChat(options: UseChatOptions = {}) {
   const {
     chatId: initialChatId,
-    userId = 'default_user', // 应该从用户认证系统获取
-    apiUrl = 'http://localhost:8000/api/v1/chats/stream',
+    apiUrl = API_ENDPOINTS.chatStream,
     onError,
     onSessionCreated
   } = options
+
+  // 从认证 store 获取用户 ID
+  const { user } = useAuthStore()
+  const userId = user?.id || ''
 
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -56,7 +65,10 @@ export function useChat(options: UseChatOptions = {}) {
   // 加载历史消息
   const loadMessages = useCallback(async (chatId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/chats/${chatId}/messages?user_id=${userId}`)
+      const url = buildUrl(`${API_ENDPOINTS.chats}/${chatId}/messages`, { user_id: userId })
+      const response = await fetch(url, {
+        headers: createAuthHeaders(),
+      })
       if (response.ok) {
         const data = await response.json()
         const loadedMessages: Message[] = data.messages.map((msg: any) => ({
@@ -86,7 +98,12 @@ export function useChat(options: UseChatOptions = {}) {
   }, [chatId, loadMessages])
 
   // 发送消息
-  const sendMessage = useCallback(async (content: string) => {
+  interface SendMessageOptions {
+    providerId?: string
+    modelName?: string
+  }
+
+  const sendMessage = useCallback(async (content: string, options?: SendMessageOptions) => {
     if (!content.trim() || isLoading) return
 
     const userMessage: Message = {
@@ -101,11 +118,16 @@ export function useChat(options: UseChatOptions = {}) {
       type: 'ai',
       content: '',
       loading: true,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      thinking: '',
+      isThinking: false
     }
 
     setMessages(prev => [...prev, userMessage, aiMessage])
     setIsLoading(true)
+
+    // 记录思考开始时间
+    let thinkingStartTime: number | null = null
 
     // 创建AbortController用于取消请求
     abortControllerRef.current = new AbortController()
@@ -113,14 +135,14 @@ export function useChat(options: UseChatOptions = {}) {
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: createAuthHeaders(),
         body: JSON.stringify({
           message: content.trim(),
           chat_id: chatId || undefined, // 如果没有chatId，后端会自动创建
           user_id: userId,
-          stream: true
+          stream: true,
+          provider_id: options?.providerId,
+          model_name: options?.modelName
         }),
         signal: abortControllerRef.current.signal
       })
@@ -137,6 +159,7 @@ export function useChat(options: UseChatOptions = {}) {
       }
 
       let accumulatedContent = ''
+      let accumulatedThinking = ''
       let receivedChatId = false
 
       while (true) {
@@ -157,6 +180,11 @@ export function useChat(options: UseChatOptions = {}) {
                 const lastMsg = newMessages[newMessages.length - 1]
                 if (lastMsg && lastMsg.type === 'ai') {
                   lastMsg.loading = false
+                  lastMsg.isThinking = false
+                  // 计算思考时长
+                  if (thinkingStartTime && lastMsg.thinking) {
+                    lastMsg.thinkingDuration = Math.round((Date.now() - thinkingStartTime) / 1000)
+                  }
                 }
                 return newMessages
               })
@@ -184,8 +212,40 @@ export function useChat(options: UseChatOptions = {}) {
                 onSessionCreated?.(chatId)
               }
 
-              // 处理内容
+              // 处理推理模型的思考过程 (reasoning_content)
+              if (parsed.reasoning_content) {
+                // 首次收到思考内容时记录开始时间
+                if (!thinkingStartTime) {
+                  thinkingStartTime = Date.now()
+                }
+                accumulatedThinking += parsed.reasoning_content
+
+                setMessages(prev => {
+                  const newMessages = [...prev]
+                  const lastMsg = newMessages[newMessages.length - 1]
+                  if (lastMsg && lastMsg.type === 'ai') {
+                    lastMsg.thinking = accumulatedThinking
+                    lastMsg.isThinking = true
+                  }
+                  return newMessages
+                })
+              }
+
+              // 处理内容 - 收到正式内容时，思考阶段结束
               if (parsed.content) {
+                // 当开始收到正式内容时，结束思考状态
+                if (thinkingStartTime && accumulatedThinking) {
+                  setMessages(prev => {
+                    const newMessages = [...prev]
+                    const lastMsg = newMessages[newMessages.length - 1]
+                    if (lastMsg && lastMsg.type === 'ai') {
+                      lastMsg.isThinking = false
+                      lastMsg.thinkingDuration = Math.round((Date.now() - thinkingStartTime!) / 1000)
+                    }
+                    return newMessages
+                  })
+                }
+
                 accumulatedContent += parsed.content
 
                 setMessages(prev => {

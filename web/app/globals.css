@@ -1,58 +1,837 @@
 @import "tailwindcss";
 
+/* ============================================
+   NEXUS AI - NEURAL NETWORK AESTHETIC
+   A futuristic, immersive design system
+   ============================================ */
+
+/* ============================================
+   CUSTOM FONTS
+   Loaded via <link> in layout.tsx for CSS compatibility
+   - Orbitron: Display headings
+   - Exo 2: Body text
+   - JetBrains Mono: Code blocks
+   ============================================ */
+
+/* ============================================
+   CSS VARIABLES - DESIGN TOKENS
+   ============================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --text-color: #334155;
+  /* Primary Palette - Deep Space */
+  --nexus-void: #030712;
+  --nexus-abyss: #0a0f1a;
+  --nexus-deep: #111827;
+  --nexus-surface: #1f2937;
+  --nexus-elevated: #374151;
+
+  /* Accent Colors - Neural Glow */
+  --nexus-cyan: #06b6d4;
+  --nexus-cyan-glow: rgba(6, 182, 212, 0.5);
+  --nexus-blue: #3b82f6;
+  --nexus-blue-glow: rgba(59, 130, 246, 0.5);
+  --nexus-violet: #8b5cf6;
+  --nexus-violet-glow: rgba(139, 92, 246, 0.5);
+  --nexus-magenta: #d946ef;
+  --nexus-magenta-glow: rgba(217, 70, 239, 0.5);
+
+  /* Semantic Colors */
+  --nexus-success: #10b981;
+  --nexus-warning: #f59e0b;
+  --nexus-error: #ef4444;
+  --nexus-info: #06b6d4;
+
+  /* Text Colors */
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-tertiary: #6b7280;
+  --text-inverse: #030712;
+
+  /* Gradients */
+  --gradient-neural: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+  --gradient-plasma: linear-gradient(135deg, #8b5cf6 0%, #d946ef 50%, #f43f5e 100%);
+  --gradient-aurora: linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #3b82f6 100%);
+  --gradient-void: linear-gradient(180deg, #030712 0%, #0a0f1a 50%, #111827 100%);
+  --gradient-radial-glow: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+
+  /* Shadows */
+  --shadow-neural: 0 0 30px rgba(6, 182, 212, 0.3), 0 0 60px rgba(59, 130, 246, 0.15);
+  --shadow-glow-sm: 0 0 10px rgba(6, 182, 212, 0.2);
+  --shadow-glow-md: 0 0 20px rgba(6, 182, 212, 0.3);
+  --shadow-glow-lg: 0 0 40px rgba(6, 182, 212, 0.4);
+  --shadow-elevated: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --border-glow: rgba(6, 182, 212, 0.3);
+
+  /* Spacing Scale */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Z-Index Scale */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
 }
 
-.dark {
-  --background: #0f172a;
-  --foreground: #ededed;
-  --text-color: #e2e8f0;
-}
-
+/* ============================================
+   TAILWIND THEME INTEGRATION
+   ============================================ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--nexus-void);
+  --color-foreground: var(--text-primary);
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Exo 2', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Helvetica, Arial, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background: var(--nexus-void);
+  color: var(--text-primary);
+  font-family: 'Exo 2', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
 }
 
-/* 滚动条样式 */
+/* Neural Network Background Pattern */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6, 182, 212, 0.15), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(139, 92, 246, 0.1), transparent),
+    radial-gradient(ellipse 50% 30% at 20% 80%, rgba(59, 130, 246, 0.08), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Grid Pattern Overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+  z-index: -1;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 80%);
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  background: var(--gradient-neural);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+h2 {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+h3 {
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+}
+
+p {
+  color: var(--text-secondary);
+}
+
+a {
+  color: var(--nexus-cyan);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--nexus-blue);
+}
+
+code, pre {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ============================================
+   SELECTION
+   ============================================ */
+::selection {
+  background: var(--nexus-cyan-glow);
+  color: var(--text-primary);
+}
+
+::-moz-selection {
+  background: var(--nexus-cyan-glow);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   SCROLLBAR - NEURAL DESIGN
+   ============================================ */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--nexus-abyss);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.3);
-  border-radius: 5px;
+  background: linear-gradient(180deg, var(--nexus-cyan), var(--nexus-blue));
+  border-radius: var(--radius-full);
+  border: 2px solid var(--nexus-abyss);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.5);
+  background: linear-gradient(180deg, var(--nexus-blue), var(--nexus-violet));
 }
 
-.dark ::-webkit-scrollbar-track {
+::-webkit-scrollbar-corner {
+  background: var(--nexus-abyss);
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nexus-cyan) var(--nexus-abyss);
+}
+
+/* ============================================
+   FOCUS STATES
+   ============================================ */
+:focus-visible {
+  outline: 2px solid var(--nexus-cyan);
+  outline-offset: 2px;
+}
+
+/* 输入框内的 textarea 不需要 focus 边框 */
+.nexus-card textarea:focus,
+.nexus-card textarea:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ============================================
+   NEURAL CARD SYSTEM
+   ============================================ */
+.nexus-card {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.8), rgba(10, 15, 26, 0.9));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.nexus-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(6, 182, 212, 0.1) 0%,
+    transparent 50%,
+    rgba(139, 92, 246, 0.05) 100%
+  );
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  pointer-events: none; /* 允许点击穿透到下层元素 */
+}
+
+.nexus-card:hover {
+  border-color: var(--border-glow);
+  box-shadow: var(--shadow-glow-md);
+  transform: translateY(-2px);
+}
+
+.nexus-card:hover::before {
+  opacity: 1;
+}
+
+/* Glowing Border Card */
+.nexus-card-glow {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(10, 15, 26, 0.95));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-xl);
+  position: relative;
+  padding: 1px;
+}
+
+.nexus-card-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--gradient-neural);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  opacity: 0.5;
+  transition: opacity var(--transition-base);
+}
+
+.nexus-card-glow:hover::before {
+  opacity: 1;
+}
+
+.nexus-card-glow-inner {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(10, 15, 26, 1));
+  border-radius: calc(var(--radius-xl) - 1px);
+  height: 100%;
+  width: 100%;
+}
+
+/* ============================================
+   NEURAL BUTTON SYSTEM
+   ============================================ */
+.nexus-btn {
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.nexus-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.nexus-btn:hover::before {
+  opacity: 1;
+}
+
+/* Primary Button */
+.nexus-btn-primary {
+  background: var(--gradient-neural);
+  color: var(--text-inverse);
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+}
+
+.nexus-btn-primary:hover {
+  box-shadow: 0 6px 25px rgba(6, 182, 212, 0.5);
+  transform: translateY(-2px);
+}
+
+.nexus-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Secondary Button */
+.nexus-btn-secondary {
+  background: transparent;
+  color: var(--nexus-cyan);
+  border: 1px solid var(--nexus-cyan);
+}
+
+.nexus-btn-secondary:hover {
+  background: rgba(6, 182, 212, 0.1);
+  box-shadow: var(--shadow-glow-sm);
+}
+
+/* Ghost Button */
+.nexus-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+
+.nexus-btn-ghost:hover {
+  color: var(--text-primary);
   background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-strong);
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.4);
+/* Icon Button */
+.nexus-btn-icon {
+  padding: 0.625rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.6);
+.nexus-btn-icon:hover {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: var(--nexus-cyan);
+  color: var(--nexus-cyan);
+  box-shadow: var(--shadow-glow-sm);
+}
+
+/* ============================================
+   NEURAL INPUT SYSTEM
+   ============================================ */
+.nexus-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  background: rgba(17, 24, 39, 0.6);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-base);
+}
+
+.nexus-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.nexus-input:hover {
+  border-color: var(--border-strong);
+}
+
+.nexus-input:focus {
+  outline: none;
+  border-color: var(--nexus-cyan);
+  box-shadow: 0 0 0 3px var(--nexus-cyan-glow);
+  background: rgba(17, 24, 39, 0.8);
+}
+
+/* Textarea */
+.nexus-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* ============================================
+   NEURAL SIDEBAR
+   ============================================ */
+.nexus-sidebar {
+  background: linear-gradient(180deg,
+    rgba(10, 15, 26, 0.95) 0%,
+    rgba(3, 7, 18, 0.98) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.nexus-sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    var(--nexus-cyan) 30%,
+    var(--nexus-violet) 70%,
+    transparent 100%
+  );
+  opacity: 0.3;
+}
+
+/* ============================================
+   ANIMATIONS - NEURAL EFFECTS
+   ============================================ */
+@keyframes neural-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px var(--nexus-cyan-glow);
+  }
+  50% {
+    box-shadow: 0 0 40px var(--nexus-cyan-glow), 0 0 60px var(--nexus-blue-glow);
+  }
+}
+
+@keyframes neural-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes glow-rotate {
+  from {
+    filter: hue-rotate(0deg);
+  }
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+@keyframes text-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes border-flow {
+  0%, 100% {
+    border-color: var(--nexus-cyan);
+  }
+  33% {
+    border-color: var(--nexus-blue);
+  }
+  66% {
+    border-color: var(--nexus-violet);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ============================================
+   ANIMATION UTILITIES
+   ============================================ */
+.animate-neural-pulse {
+  animation: neural-pulse 3s ease-in-out infinite;
+}
+
+.animate-neural-flow {
+  background-size: 200% 200%;
+  animation: neural-flow 8s ease infinite;
+}
+
+.animate-float {
+  animation: float-subtle 4s ease-in-out infinite;
+}
+
+.animate-glow-rotate {
+  animation: glow-rotate 10s linear infinite;
+}
+
+.animate-text-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--nexus-cyan) 0%,
+    var(--nexus-blue) 25%,
+    var(--nexus-violet) 50%,
+    var(--nexus-blue) 75%,
+    var(--nexus-cyan) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: text-shimmer 4s linear infinite;
+}
+
+.animate-border-flow {
+  animation: border-flow 4s ease infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.4s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.4s ease-out forwards;
+}
+
+/* Animation Delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-800 { animation-delay: 800ms; }
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+.nexus-loading {
+  position: relative;
+}
+
+.nexus-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(6, 182, 212, 0.1),
+    transparent
+  );
+  animation: loading-sweep 1.5s ease-in-out infinite;
+}
+
+@keyframes loading-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Neural Spinner */
+.nexus-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-default);
+  border-top-color: var(--nexus-cyan);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   GLASS MORPHISM (UPDATED FOR NEURAL THEME)
+   ============================================ */
+.nexus-glass {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid var(--border-default);
+}
+
+.nexus-glass-elevated {
+  background: rgba(31, 41, 55, 0.8);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.text-gradient-neural {
+  background: var(--gradient-neural);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-plasma {
+  background: var(--gradient-plasma);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-gradient-neural {
+  background: var(--gradient-neural);
+}
+
+.bg-gradient-plasma {
+  background: var(--gradient-plasma);
+}
+
+.bg-gradient-void {
+  background: var(--gradient-void);
+}
+
+.border-glow {
+  border-color: var(--border-glow);
+  box-shadow: var(--shadow-glow-sm);
+}
+
+.shadow-glow-sm { box-shadow: var(--shadow-glow-sm); }
+.shadow-glow-md { box-shadow: var(--shadow-glow-md); }
+.shadow-glow-lg { box-shadow: var(--shadow-glow-lg); }
+.shadow-neural { box-shadow: var(--shadow-neural); }
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   DARK MODE ENHANCEMENTS (Default is Dark)
+   ============================================ */
+/* ============================================
+   CUSTOM SCROLLBAR FOR THINKING BLOCK
+   ============================================ */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--nexus-violet);
+  opacity: 0.3;
+  border-radius: var(--radius-full);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--nexus-violet);
+  opacity: 0.5;
+}
+
+.light {
+  --nexus-void: #f8fafc;
+  --nexus-abyss: #f1f5f9;
+  --nexus-deep: #e2e8f0;
+  --nexus-surface: #cbd5e1;
+  --nexus-elevated: #94a3b8;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-inverse: #f8fafc;
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-default: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.2);
 }

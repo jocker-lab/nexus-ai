@@ -4,7 +4,7 @@ from typing import Optional
 from app.schemas.chats import ChatForm, ChatModel, ChatTitleIdResponse
 from app.models.chats import Chat
 from sqlalchemy import or_
-from app.database.db import get_db
+from app.database.db import get_db_context
 from loguru import logger
 
 class ChatTable:
@@ -15,7 +15,7 @@ class ChatTable:
         """
         创建一条新的聊天记录，包含聊天标题、历史消息等
         """
-        with get_db() as db:
+        with get_db_context() as db:
             id = str(uuid.uuid4())
             chat = ChatModel(
                 **{
@@ -70,7 +70,7 @@ class ChatTable:
     def get_chat_by_id(self, id: str) -> Optional[ChatModel]:
         """根据聊天ID获取完整聊天对象"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 return ChatModel.model_validate(db.get(Chat, id))
         except Exception:
             return None
@@ -78,7 +78,7 @@ class ChatTable:
     def get_chat_by_id_and_user_id(self, id: str, user_id: str) -> Optional[ChatModel]:
         """根据聊天ID与用户ID获取聊天"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 chat = db.query(Chat).filter_by(id=id, user_id=user_id).first()
                 return ChatModel.model_validate(chat)
         except Exception:
@@ -101,7 +101,7 @@ class ChatTable:
 
     def get_chat_list_by_user_id(self, user_id: str, include_archived: bool = False, skip: int = 0, limit: int = 50) -> list[ChatModel]:
         """获取用户下所有聊天列表"""
-        with get_db() as db:
+        with get_db_context() as db:
             query = db.query(Chat).filter_by(user_id=user_id)
             if not include_archived:
                 query = query.filter_by(archived=False)
@@ -110,17 +110,17 @@ class ChatTable:
 
     def get_pinned_chats_by_user_id(self, user_id: str) -> list[ChatModel]:
         """获取用户置顶的聊天"""
-        with get_db() as db:
+        with get_db_context() as db:
             return [ChatModel.model_validate(c) for c in db.query(Chat).filter_by(user_id=user_id, pinned=True, archived=False).order_by(Chat.updated_at.desc()).all()]
 
     def get_archived_chats_by_user_id(self, user_id: str) -> list[ChatModel]:
         """获取用户归档聊天"""
-        with get_db() as db:
+        with get_db_context() as db:
             return [ChatModel.model_validate(c) for c in db.query(Chat).filter_by(user_id=user_id, archived=True).order_by(Chat.updated_at.desc()).all()]
 
     def get_chat_title_id_list_by_user_id(self, user_id: str, include_archived: bool = False, skip: Optional[int] = None, limit: Optional[int] = None) -> list[ChatTitleIdResponse]:
         """获取用户聊天ID和标题的简要列表"""
-        with get_db() as db:
+        with get_db_context() as db:
             query = db.query(Chat).filter_by(user_id=user_id, folder_id=None)
             query = query.filter(or_(Chat.pinned == False, Chat.pinned == None))
             if not include_archived:
@@ -132,7 +132,7 @@ class ChatTable:
 
     def get_chats_by_folder_id_and_user_id(self, folder_id: str, user_id: str) -> list[ChatModel]:
         """获取指定文件夹下的聊天"""
-        with get_db() as db:
+        with get_db_context() as db:
             query = db.query(Chat).filter_by(folder_id=folder_id, user_id=user_id, archived=False)
             query = query.filter(or_(Chat.pinned == False, Chat.pinned == None))
             return [ChatModel.model_validate(chat) for chat in query.order_by(Chat.updated_at.desc()).all()]
@@ -143,7 +143,7 @@ class ChatTable:
     def update_chat_by_id(self, id: str, chat: dict) -> Optional[ChatModel]:
         """更新整个聊天内容，包括标题和消息"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 chat_item = db.get(Chat, id)
                 chat_item.chat = chat
                 chat_item.title = chat.get("title", "New Chat")
@@ -165,7 +165,7 @@ class ChatTable:
     def toggle_chat_pinned_by_id(self, id: str) -> Optional[ChatModel]:
         """切换聊天置顶状态"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 chat = db.get(Chat, id)
                 chat.pinned = not chat.pinned
                 chat.updated_at = int(time.time())
@@ -178,7 +178,7 @@ class ChatTable:
     def toggle_chat_archive_by_id(self, id: str) -> Optional[ChatModel]:
         """切换聊天归档状态"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 chat = db.get(Chat, id)
                 chat.archived = not chat.archived
                 chat.updated_at = int(time.time())
@@ -191,7 +191,7 @@ class ChatTable:
     def update_chat_folder_id_by_id_and_user_id(self, id: str, user_id: str, folder_id: str) -> Optional[ChatModel]:
         """将聊天移动到指定文件夹"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 chat = db.get(Chat, id)
                 chat.folder_id = folder_id
                 chat.updated_at = int(time.time())
@@ -208,7 +208,7 @@ class ChatTable:
     def delete_chat_by_id(self, id: str) -> bool:
         """删除单个聊天（包括分享记录）"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 db.query(Chat).filter_by(id=id).delete()
                 db.commit()
                 return True
@@ -218,7 +218,7 @@ class ChatTable:
     def delete_chat_by_id_and_user_id(self, id: str, user_id: str) -> bool:
         """删除指定用户的某条聊天"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 db.query(Chat).filter_by(id=id, user_id=user_id).delete()
                 db.commit()
                 return True
@@ -228,7 +228,7 @@ class ChatTable:
     def delete_chats_by_user_id(self, user_id: str) -> bool:
         """删除用户下所有聊天"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 self.delete_shared_chats_by_user_id(user_id)
                 db.query(Chat).filter_by(user_id=user_id).delete()
                 db.commit()
@@ -239,7 +239,7 @@ class ChatTable:
     def delete_chats_by_user_id_and_folder_id(self, user_id: str, folder_id: str) -> bool:
         """删除文件夹下所有聊天"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 db.query(Chat).filter_by(user_id=user_id, folder_id=folder_id).delete()
                 db.commit()
                 return True
@@ -249,7 +249,7 @@ class ChatTable:
     def archive_all_chats_by_user_id(self, user_id: str) -> bool:
         """批量归档用户下所有聊天"""
         try:
-            with get_db() as db:
+            with get_db_context() as db:
                 db.query(Chat).filter_by(user_id=user_id).update({"archived": True})
                 db.commit()
                 return True

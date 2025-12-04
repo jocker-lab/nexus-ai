@@ -49,7 +49,11 @@ async def document_integrator(state: DocumentState) -> Dict[str, Any]:
     # === 2. 构建 LLM Prompt ===
     logger.info("  ↳ 调用 LLM 进行智能整合...")
 
-    llm = init_chat_model("deepseek:deepseek-chat")
+    llm = init_chat_model(
+        "deepseek:deepseek-reasoner",
+        max_tokens=16384,
+        timeout=120,  # 推理模型耗时较长，加大超时
+    )
 
     system_prompt = render_prompt_template(
         "publisher_prompts/document_writing/document_integrator_system",

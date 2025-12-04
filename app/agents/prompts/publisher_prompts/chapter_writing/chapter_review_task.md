@@ -1,55 +1,53 @@
+# Task: Content Compliance & Quality Review
 
+Please review the provided draft against the following project constraints and chapter specifications.
 
-请对以下章节草稿进行专业审查，评估其是否符合写作要求与质量标准。
----
+<project_context>
+    <title>{{ document_outline.title }}</title>
+    <target_audience>{{ document_outline.target_audience }}</target_audience>
+    <style>{{ document_outline.writing_style }}</style>
+    <tone>{{ document_outline.writing_tone }}</tone>
+    <purpose>{{ document_outline.writing_purpose }}</purpose>
+</project_context>
 
-## 写作背景
----
+<chapter_specifications>
+    <title>{{ chapter_outline.title }}</title>
+    <description>{{ chapter_outline.description }}</description>
+    <priority>{{ chapter_outline.writing_priority }}</priority>
+    <target_word_count>{{ chapter_outline.estimated_words }}</target_word_count>
+    <visuals_required>{% if chapter_outline.visual_elements %}Yes{% else %}No{% endif %}</visuals_required>
+    
+    {% if chapter_outline.writing_guidance %}
+    <guidance>
+    {{ chapter_outline.writing_guidance }}
+    </guidance>
+    {% endif %}
 
-## 文档信息
+    {% if chapter_outline.content_requirements %}
+    <content_requirements>
+    {{ chapter_outline.content_requirements }}
+    </content_requirements>
+    {% endif %}
 
-- **文档标题**: {{ document_outline.title }}
-- **目标读者**: {{ document_outline.target_audience }}
-- **写作风格**: {{ document_outline.writing_style }}
-- **写作语调**: {{ document_outline.writing_tone }}
-- **写作目的**: {{ document_outline.writing_purpose }}
+    {% if chapter_outline.subsections %}
+    <subsection_structure>
+    {% for sub in chapter_outline.subsections %}
+        <subsection index="{{ loop.index }}">
+            <title>{{ sub.sub_section_title }}</title>
+            {% if sub.description %}<desc>{{ sub.description }}</desc>{% endif %}
+            {% if sub.writing_guidance %}<guide>{{ sub.writing_guidance }}</guide>{% endif %}
+            {% if sub.estimated_word_count %}<words>{{ sub.estimated_word_count }}</words>{% endif %}
+        </subsection>
+    {% endfor %}
+    </subsection_structure>
+    {% endif %}
+</chapter_specifications>
 
----
-
-## 章节要求
-
-### {{ chapter_outline.title }}
-
-**章节定位**: {{ chapter_outline.description }}
-
-{% if chapter_outline.writing_guidance %}
-**写作指导**: {{ chapter_outline.writing_guidance }}
-{% endif %}
-
-{% if chapter_outline.content_requirements %}
-**内容要求**: {{ chapter_outline.content_requirements }}
-{% endif %}
-
-**目标字数**: {{ chapter_outline.estimated_words }} 字
-**优先级**: {{ chapter_outline.writing_priority }}
-{% if chapter_outline.visual_elements %}
-**需要图表**: 是
-{% endif %}
-
-{% if chapter_outline.subsections %}
-### 子章节结构
-{% for sub in chapter_outline.subsections %}
-#### {{ loop.index }}. {{ sub.sub_section_title }}
-{% if sub.description %}- 定位: {{ sub.description }}{% endif %}
-{% if sub.writing_guidance %}- 指导: {{ sub.writing_guidance }}{% endif %}
-{% if sub.estimated_word_count %}- 字数: {{ sub.estimated_word_count }}{% endif %}
-{% endfor %}
-{% endif %}
-
----
-
-## 待审查草稿
-```
+<target_draft_to_review>
 {{ draft }}
-```
-请直接输出结构化的审查结果。
+</target_draft_to_review>
+
+---
+**Instruction:**
+Based on the **System Prompt** rules and the **Context/Specifications** provided above, evaluate the content in `<target_draft_to_review>`. 
+Output the result in the strictly defined **JSON format**.

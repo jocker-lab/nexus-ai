@@ -23,87 +23,179 @@ load_dotenv()
 # ========== 测试数据 ==========
 
 document_outline = DocumentOutline(
-    title="人工智能技术发展报告",
+    title="2025年第一季度中原银行风险分析报告",
     language="zh",
-    target_audience="技术管理者、AI研究人员、投资决策者",
+    target_audience="公司高管层、董事会成员、风险管理委员会、监管机构",
     writing_style="business",
     writing_tone="authoritative",
-    writing_purpose="为读者提供AI技术发展的全面视角，包括技术趋势、应用案例和未来展望",
+    writing_purpose="全面评估中原银行2025年第一季度的经营状况与风险水平，重点分析同业竞争地位及个人业务风险，为管理决策提供依据。",
     key_themes=[
-        "大模型技术演进",
-        "AI商业应用实践",
+        "宏观环境与监管动态",
+        "经营业绩与同业对标",
+        "个人信贷业务风险特征",
+        "风险抵御能力评估",
+        "战略建议与展望",
     ],
-    estimated_total_words=3000,
+    estimated_total_words=8000,
     sections=[
         Section(
-            title="第一章 大模型技术现状",
-            description="分析当前大语言模型的技术发展现状、核心突破和主流架构",
-            writing_guidance="采用技术演进的时间线视角，从架构创新到模型对比到训练技术，层层递进。",
-            content_requirements="需要包含：1) Transformer架构演进脉络 2) 主流模型的参数规模和性能对比数据",
+            title="一、宏观环境与监管政策",
+            description="分析2025年第一季度外部环境对银行经营的影响",
+            writing_guidance="简明扼要地扫描宏观经济指标和核心监管政策，重点突出对区域性银行的影响。",
+            content_requirements="包含GDP、利率环境、河南区域经济以及最新监管导向。",
             visual_elements=False,
-            estimated_words=1500,
-            writing_priority="high",
+            estimated_words=1200,
+            writing_priority="medium",
             subsections=[
                 SubSection(
-                    sub_section_title="Transformer架构演进",
-                    description="追溯Transformer从诞生到现在的技术演进路径",
-                    writing_guidance="""
-                    【段落1 - 起源与突破】(150-200字)
-                    - 从2017年原始论文切入，说明Transformer的革命性意义
-                    - 简述其替代RNN/LSTM成为主流架构的核心原因
-                    - 点明自注意力机制(Self-Attention)解决的关键问题
-
-                    【段落2 - 核心机制解析】(250-300字)
-                    - 详细解释Multi-Head Attention的工作原理和价值
-                    - 说明位置编码(Positional Encoding)在序列建模中的作用
-
-                    【段落3 - 关键优化演进】(200-250字)
-                    - 按时间线梳理主要改进方向
-                    """,
-                    estimated_word_count=650
+                    sub_section_title="（一）宏观经济运行态势",
+                    description="分析国内外经济走势及区域经济特点",
+                    writing_guidance="重点分析利率下行趋势对息差的影响，以及河南区域经济的复苏情况。",
+                    estimated_word_count=600
                 ),
                 SubSection(
-                    sub_section_title="主流模型性能对比",
-                    description="对比GPT系列、Claude、LLaMA等主流模型",
-                    writing_guidance="""
-                    【段落1 - 模型概览与分类】(200-250字)
-                    - 列举当前市场主流大模型
-
-                    【段落2 - 综合能力基准测试】(350-400字)
-                    - 介绍MMLU作为最权威的综合评测基准
-                    """,
-                    estimated_word_count=900
+                    sub_section_title="（二）监管政策导向",
+                    description="梳理对中小银行影响重大的监管政策",
+                    writing_guidance="关注资本新规、消费者权益保护以及防范化解金融风险的政策要求。",
+                    estimated_word_count=600
                 ),
             ]
         ),
 
         Section(
-            title="第二章 AI商业应用实践",
-            description="深入分析AI技术在各行业的落地应用案例",
-            writing_guidance="以实际案例为主导，采用'行业背景-痛点分析-解决方案-效果评估'的四段式结构。",
-            content_requirements="需要包含：1) 3个不同行业的深度案例 2) 每个案例的ROI数据",
+            title="二、报告期内经营概况",
+            description="回顾2025年第一季度的整体经营业绩",
+            writing_guidance="用数据说话，展示资产负债规模、营收利润以及资产质量的总体情况。",
+            content_requirements="总资产、净利润、不良率等核心指标的同比环比变化。",
             visual_elements=True,
             estimated_words=1500,
+            writing_priority="medium",
+            subsections=[
+                SubSection(
+                    sub_section_title="（一）主要财务指标分析",
+                    description="分析规模与效益指标",
+                    writing_guidance="分析营收结构、净息差变化及成本收入比。",
+                    estimated_word_count=800
+                ),
+                SubSection(
+                    sub_section_title="（二）资产质量总体概览",
+                    description="概述全行资产质量状况",
+                    writing_guidance="简述不良贷款率、拨备覆盖率的变化，为后续详细风险分析做铺垫。",
+                    estimated_word_count=700
+                ),
+            ]
+        ),
+
+        Section(
+            title="三、同业对标分析",
+            description="将本行关键指标与同类型上市城商行进行深度对标",
+            writing_guidance="选取3-5家资产规模相近或区域类似的上市城商行作为标杆，找出差距与优势。数据需详实。",
+            content_requirements="规模指标排名、盈利能力对比（ROE、ROA、净息差）、资产质量对比（不良率、拨备覆盖率）。",
+            visual_elements=True,
+            estimated_words=2000,
             writing_priority="high",
             subsections=[
                 SubSection(
-                    sub_section_title="金融行业：智能风控与客服",
-                    description="分析AI在银行、保险等金融机构的应用",
+                    sub_section_title="（一）规模与市场地位对标",
+                    description="对比资产负债规模及市场份额",
                     writing_guidance="""
-                    【段落1 - 行业背景与痛点】(150-180字)
-                    - 描述金融行业面临的核心挑战
-
-                    【段落2 - AI解决方案】(280-320字)
-                    - 分两个应用场景展开：风控应用和智能客服
+                    【段落1】选取郑州银行、长沙银行、贵阳银行等作为对标对象。
+                    【段落2】对比总资产增速、存贷款市场份额变化。
+                    【可视化】生成'可比同业资产规模对比柱状图'。
                     """,
-                    estimated_word_count=650
+                    estimated_word_count=600
+                ),
+                SubSection(
+                    sub_section_title="（二）盈利能力与效率对标",
+                    description="对比营收增速、利润水平及运营效率",
+                    writing_guidance="""
+                    【段落1】深入分析净息差（NIM）与同业的差距，寻找原因（负债成本或资产收益）。
+                    【段落2】对比中间业务收入占比，评估收入多元化程度。
+                    【可视化】生成'同业净息差与ROE对比散点图'。
+                    """,
+                    estimated_word_count=700
+                ),
+                SubSection(
+                    sub_section_title="（三）风险抵补能力对标",
+                    description="对比资产质量核心指标",
+                    writing_guidance="""
+                    【段落1】对比不良贷款率和关注类贷款占比，评估资产质量的相对水平。
+                    【段落2】对比拨备覆盖率和资本充足率，评估风险抵御的安全垫厚度。
+                    """,
+                    estimated_word_count=700
+                ),
+            ]
+        ),
+
+        Section(
+            title="四、个人风险分析",
+            description="深入聚焦个人零售信贷业务的风险状况",
+            writing_guidance="针对个人住房贷款、个人经营贷和信用卡业务进行细分风险分析，关注客群信用变化。",
+            content_requirements="个人贷款不良率、按揭贷款逾期情况、信用卡风险暴露、风控措施有效性。",
+            visual_elements=True,
+            estimated_words=2000,
+            writing_priority="high",
+            subsections=[
+                SubSection(
+                    sub_section_title="（一）个人信贷资产质量",
+                    description="整体评估零售贷款的风险状况",
+                    writing_guidance="""
+                    【段落1】分析个人贷款整体不良率及五级分类迁徙情况。
+                    【段落2】分析不同产品（房贷、消费贷、经营贷）的风险贡献度。
+                    【可视化】生成'个人贷款各产品不良率趋势图'。
+                    """,
+                    estimated_word_count=600
+                ),
+                SubSection(
+                    sub_section_title="（二）重点产品风险剖析",
+                    description="聚焦按揭与信用卡两大核心产品",
+                    writing_guidance="""
+                    【段落1 - 住房按揭】分析'保交楼'背景下的按揭逾期风险及房价波动影响。
+                    【段落2 - 信用卡】分析信用卡透支不良率、早期催收回款率及共债风险。
+                    """,
+                    estimated_word_count=800
+                ),
+                SubSection(
+                    sub_section_title="（三）个人风险管控措施",
+                    description="评估零售风控体系的有效性",
+                    writing_guidance="""
+                    【段落1】介绍大数据风控模型（如A/B/C卡）的迭代与应用。
+                    【段落2】说明催收管理的优化措施及消费者权益保护执行情况。
+                    """,
+                    estimated_word_count=600
+                ),
+            ]
+        ),
+
+        Section(
+            title="五、总结与建议",
+            description="全篇总结并提出管理建议",
+            writing_guidance="高度概括报告核心发现，提出针对性、可落地的战略建议。",
+            content_requirements="经营综述、针对同业差距的改进建议、针对个人风险的管控建议。",
+            visual_elements=False,
+            estimated_words=1300,
+            writing_priority="medium",
+            subsections=[
+                SubSection(
+                    sub_section_title="（一）经营与风险综述",
+                    description="总结报告期内核心观点",
+                    writing_guidance="概括第一季度经营亮点、同业竞争地位变化及主要风险挑战。",
+                    estimated_word_count=500
+                ),
+                SubSection(
+                    sub_section_title="（二）管理改进建议",
+                    description="基于分析提出的具体措施",
+                    writing_guidance="""
+                    【建议1】针对同业对标：如何提升息差韧性、优化负债成本。
+                    【建议2】针对个人风险：建议加强数字化风控、优化客群结构。
+                    【建议3】总体战略：关于资本补充与数字化转型的建议。
+                    """,
+                    estimated_word_count=800
                 ),
             ]
         ),
     ]
 )
-
-
 # ========== 测试函数 ==========
 
 async def test_document_writing_graph():
@@ -194,23 +286,22 @@ async def test_document_writing_graph():
             assert "metadata" in ch_data, f"章节 {ch_id} 缺少 metadata"
             logger.info(f"  ✓ 章节 {ch_id}: {len(ch_data['content'])} 字符, 评分: {ch_data['metadata'].get('final_score', 'N/A')}")
 
-        # 检查 document_metadata
-        assert "document_metadata" in result, "缺少 document_metadata"
-        metadata = result["document_metadata"]
-        logger.info(f"  ✓ 总字数: {metadata.get('total_words', 0)}")
-        logger.info(f"  ✓ 平均评分: {metadata.get('avg_score', 0)}")
-
         # 检查 document (整合后文档)
         assert "document" in result, "缺少 document"
         document = result["document"]
         assert len(document) > 0, "document 为空"
         logger.info(f"  ✓ 最终文档长度: {len(document)} 字符")
 
-        # 检查 document_review
-        assert "document_review" in result, "缺少 document_review"
-        review = result["document_review"]
-        logger.info(f"  ✓ 审查状态: {review.get('status', 'N/A')}")
-        logger.info(f"  ✓ 整体评估: {review.get('overall_assessment', 'N/A')}")
+        # 检查 document_metadata (由 document_finalizer 生成)
+        assert "document_metadata" in result, "缺少 document_metadata"
+        metadata = result["document_metadata"]
+        logger.info(f"  ✓ 元数据状态: {metadata.get('status', 'N/A')}")
+        logger.info(f"  ✓ 文档标题: {metadata.get('title', 'N/A')}")
+        logger.info(f"  ✓ 文档分类: {metadata.get('category', 'N/A')}")
+        logger.info(f"  ✓ 文档标签: {metadata.get('tags', 'N/A')}")
+        logger.info(f"  ✓ 总字数: {metadata.get('word_count', 0)}")
+        logger.info(f"  ✓ 预估阅读时间: {metadata.get('estimated_reading_time', 0)} 分钟")
+        logger.info(f"  ✓ 核心洞察数: {len(metadata.get('key_insights', []))}")
 
         logger.info("\n" + "="*80)
         logger.success("✅ 所有测试通过！")
@@ -246,7 +337,7 @@ async def test_individual_nodes():
         chapter_dispatcher,
         chapter_aggregator,
         document_integrator,
-        document_reviewer
+        document_finalizer
     )
 
     # 创建基础 state
@@ -259,7 +350,6 @@ async def test_individual_nodes():
         "writing_principles": ["准确性", "客观性", "前瞻性"],
         "completed_chapters": {},
         "document_metadata": {},
-        "document_review": {},
         "document": "",
     }
 
@@ -328,24 +418,26 @@ async def test_individual_nodes():
         logger.error(f"  ❌ document_integrator 测试失败: {e}\n")
         integrator_result = {}
 
-    # === 测试 4: document_reviewer ===
-    logger.info("🧪 测试 document_reviewer...")
+    # === 测试 4: document_finalizer ===
+    logger.info("🧪 测试 document_finalizer...")
     try:
-        reviewer_state = {
+        finalizer_state = {
             **integrator_state,
-            "document": integrator_result.get("document", "# 测试文档\n\n这是测试内容..."),
+            "document": integrator_result.get("document", "# 测试文档\n\n这是一篇关于人工智能发展趋势的分析报告。本文将从技术演进、市场应用和未来展望三个维度进行深入分析..."),
         }
 
-        reviewer_result = await document_reviewer(reviewer_state)
-        latest_review = reviewer_result.get('latest_review')
-        if latest_review:
-            logger.info(f"  ✓ reviewer 返回审查状态: {latest_review.status}")
-            logger.info(f"  ✓ reviewer 返回评分: {latest_review.score}")
-            logger.info(f"  ✓ reviewer 返回建议数: {len(latest_review.actionable_suggestions)}")
-        logger.info(f"  ✓ reviewer 修订次数: {reviewer_result.get('revision_count')}")
-        logger.success("  ✓ document_reviewer 测试通过\n")
+        finalizer_result = await document_finalizer(finalizer_state)
+        metadata = finalizer_result.get('document_metadata', {})
+        logger.info(f"  ✓ finalizer 返回状态: {metadata.get('status', 'N/A')}")
+        logger.info(f"  ✓ finalizer 返回标题: {metadata.get('title', 'N/A')}")
+        logger.info(f"  ✓ finalizer 返回描述长度: {len(metadata.get('description', ''))}")
+        logger.info(f"  ✓ finalizer 返回分类: {metadata.get('category', 'N/A')}")
+        logger.info(f"  ✓ finalizer 返回标签: {metadata.get('tags', 'N/A')}")
+        logger.info(f"  ✓ finalizer 返回字数: {metadata.get('word_count', 0)}")
+        logger.info(f"  ✓ finalizer 返回阅读时间: {metadata.get('estimated_reading_time', 0)} 分钟")
+        logger.success("  ✓ document_finalizer 测试通过\n")
     except Exception as e:
-        logger.error(f"  ❌ document_reviewer 测试失败: {e}\n")
+        logger.error(f"  ❌ document_finalizer 测试失败: {e}\n")
 
     logger.info("="*80)
     logger.success("✅ 独立节点测试完成！")

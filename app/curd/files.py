@@ -1,13 +1,13 @@
 import time
 from typing import Optional
-from app.database.db import get_db
+from app.database.db import get_db_context
 from app.models.files import File
 from app.schemas.files import FileForm, FileModel, FileMetadataResponse
 
 
 class FilesTable:
     def insert_new_file(self, user_id: str, form_data: FileForm) -> Optional[FileModel]:
-        with get_db() as db:
+        with get_db_context() as db:
             file = FileModel(
                 **{
                     **form_data.model_dump(),
@@ -31,7 +31,7 @@ class FilesTable:
                 return None
 
     def get_file_by_id(self, id: str) -> Optional[FileModel]:
-        with get_db() as db:
+        with get_db_context() as db:
             try:
                 file = db.get(File, id)
                 return FileModel.model_validate(file)
@@ -39,7 +39,7 @@ class FilesTable:
                 return None
 
     def get_file_metadata_by_id(self, id: str) -> Optional[FileMetadataResponse]:
-        with get_db() as db:
+        with get_db_context() as db:
             try:
                 file = db.get(File, id)
                 return FileMetadataResponse(
@@ -52,11 +52,11 @@ class FilesTable:
                 return None
 
     def get_files(self) -> list[FileModel]:
-        with get_db() as db:
+        with get_db_context() as db:
             return [FileModel.model_validate(file) for file in db.query(File).all()]
 
     def get_files_by_ids(self, ids: list[str]) -> list[FileModel]:
-        with get_db() as db:
+        with get_db_context() as db:
             return [
                 FileModel.model_validate(file)
                 for file in db.query(File)
@@ -66,7 +66,7 @@ class FilesTable:
             ]
 
     def get_file_metadatas_by_ids(self, ids: list[str]) -> list[FileMetadataResponse]:
-        with get_db() as db:
+        with get_db_context() as db:
             return [
                 FileMetadataResponse(
                     id=file.id,
@@ -81,14 +81,14 @@ class FilesTable:
             ]
 
     def get_files_by_user_id(self, user_id: str) -> list[FileModel]:
-        with get_db() as db:
+        with get_db_context() as db:
             return [
                 FileModel.model_validate(file)
                 for file in db.query(File).filter_by(user_id=user_id).all()
             ]
 
     def update_file_hash_by_id(self, id: str, hash: str) -> Optional[FileModel]:
-        with get_db() as db:
+        with get_db_context() as db:
             try:
                 file = db.query(File).filter_by(id=id).first()
                 file.hash = hash
@@ -99,7 +99,7 @@ class FilesTable:
                 return None
 
     def update_file_data_by_id(self, id: str, data: dict) -> Optional[FileModel]:
-        with get_db() as db:
+        with get_db_context() as db:
             try:
                 file = db.query(File).filter_by(id=id).first()
                 file.data = {**(file.data if file.data else {}), **data}
@@ -110,7 +110,7 @@ class FilesTable:
                 return None
 
     def update_file_metadata_by_id(self, id: str, meta: dict) -> Optional[FileModel]:
-        with get_db() as db:
+        with get_db_context() as db:
             try:
                 file = db.query(File).filter_by(id=id).first()
                 file.meta = {**(file.meta if file.meta else {}), **meta}
@@ -120,7 +120,7 @@ class FilesTable:
                 return None
 
     def delete_file_by_id(self, id: str) -> bool:
-        with get_db() as db:
+        with get_db_context() as db:
             try:
                 db.query(File).filter_by(id=id).delete()
                 db.commit()
@@ -130,7 +130,7 @@ class FilesTable:
                 return False
 
     def delete_all_files(self) -> bool:
-        with get_db() as db:
+        with get_db_context() as db:
             try:
                 db.query(File).delete()
                 db.commit()

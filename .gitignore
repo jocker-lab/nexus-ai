@@ -9,24 +9,15 @@ __pycache__/
 *$py.class
 *.so
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+# Distribution / packaging (Python specific paths)
 *.egg-info/
-.installed.cfg
 *.egg
-MANIFEST
+.eggs/
+dist/
+build/
+sdist/
+wheels/
+*.whl
 
 # PyInstaller
 *.manifest
@@ -38,7 +29,6 @@ htmlcov/
 .nox/
 .coverage
 .coverage.*
-.cache
 nosetests.xml
 coverage.xml
 *.cover
@@ -80,9 +70,6 @@ app/config/config.yaml
 *.sqlite
 *.sqlite3
 
-# Database migrations (keep migration files, ignore data)
-# migrations/versions/*.pyc
-
 # MySQL dumps
 *.sql
 *.dump
@@ -98,31 +85,13 @@ pip-log.txt
 # ========== Node.js / Frontend ==========
 # Dependencies
 node_modules/
-web/node_modules/
 
-# Next.js
+# Next.js build output
 .next/
 out/
-web/.next/
-web/out/
-
-# Production build
-build/
 
 # Misc frontend
-.DS_Store
 *.pem
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Local env files (Next.js)
-web/.env.local
-web/.env.development.local
-web/.env.test.local
-web/.env.production.local
 
 # Vercel
 .vercel
@@ -130,7 +99,6 @@ web/.env.production.local
 # ========== IDEs & Editors ==========
 # VSCode
 .vscode/
-.vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
@@ -149,7 +117,6 @@ web/.env.production.local
 .*.sw[a-z]
 
 # Emacs
-*~
 \#*\#
 /.emacs.desktop
 /.emacs.desktop.lock
@@ -163,7 +130,6 @@ web/.env.production.local
 # Docker volumes and data
 docker/data/
 docker/volumes/
-*.dockerignore
 
 # Docker compose override
 docker-compose.override.yml
@@ -199,43 +165,33 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Linux
-*~
 .directory
 .Trash-*
 
 # ========== Serena MCP ==========
-# Serena memory/cache files
 .serena/
 
 # ========== Testing ==========
 # Test outputs
 test_output/
 test_results/
-.coverage
-htmlcov/
 
 # ========== Alembic ==========
-# Keep migration files, ignore cache
 alembic.ini.local
 
 # ========== Temporary Files ==========
 *.tmp
 *.temp
 *.bak
-*.swp
-*.swo
 .cache/
 
 # ========== Project-specific ==========
-# FastAPI test files (if needed)
+# FastAPI test files
 fastapi_sse_server_*.py
 
 # Mock frontend files
 frontend_v*.html
 *_mock.html
-
-# Local development files
-*.local.*
 
 # Backup files
 *.backup
@@ -246,7 +202,6 @@ frontend_v*.html
 CLAUDE.md
 
 # ========== Keep Important Files ==========
-# Force include important documentation
 !README.md
 !docs/**/*.md
 !.env.example
