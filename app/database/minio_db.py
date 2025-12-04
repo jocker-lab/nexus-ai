@@ -76,7 +76,7 @@ class MinIOClient:
     def upload_chart(
         self,
         file_data: bytes,
-        report_id: str,
+        document_id: str,
         filename: str,
         content_type: str = "image/png"
     ) -> str:
@@ -85,7 +85,7 @@ class MinIOClient:
 
         Args:
             file_data: 图片的二进制数据
-            report_id: 报告ID，用于组织文件路径
+            document_id: 文档ID，用于组织文件路径
             filename: 文件名
             content_type: MIME类型
 
@@ -96,8 +96,8 @@ class MinIOClient:
             self.initialize()
 
         try:
-            # 构造对象路径: reports/{report_id}/charts/{filename}
-            object_name = f"reports/{report_id}/charts/{filename}"
+            # 构造对象路径: documents/{document_id}/charts/{filename}
+            object_name = f"documents/{document_id}/charts/{filename}"
 
             # 创建字节流
             file_stream = io.BytesIO(file_data)
@@ -196,12 +196,12 @@ class MinIOClient:
             logger.error(f"Failed to delete chart from MinIO: {e}")
             return False
 
-    def delete_report_charts(self, report_id: str) -> int:
+    def delete_document_charts(self, document_id: str) -> int:
         """
-        删除某个报告的所有图表
+        删除某个文档的所有图表
 
         Args:
-            report_id: 报告ID
+            document_id: 文档ID
 
         Returns:
             int: 删除的文件数量
@@ -210,7 +210,7 @@ class MinIOClient:
             self.initialize()
 
         try:
-            prefix = f"reports/{report_id}/charts/"
+            prefix = f"documents/{document_id}/charts/"
             objects = self.client.list_objects(
                 bucket_name=self.bucket_name,
                 prefix=prefix,
@@ -225,12 +225,92 @@ class MinIOClient:
                 )
                 count += 1
 
-            logger.info(f"Deleted {count} charts for report {report_id}")
+            logger.info(f"Deleted {count} charts for document {document_id}")
             return count
 
         except S3Error as e:
-            logger.error(f"Failed to delete report charts: {e}")
+            logger.error(f"Failed to delete document charts: {e}")
             return 0
+
+    # 兼容性别名
+    def delete_report_charts(self, report_id: str) -> int:
+        """兼容性方法，调用 delete_document_charts"""
+        return self.delete_document_charts(report_id)
+
+    def upload_pending_file(
+        self,
+        file_data: bytes,
+        object_name: str,
+        content_type: str = "application/octet-stream"
+    ) -> str:
+        """
+        上传文件到 pending bucket（临时存储）
+
+        Args:
+            file_data: 文件二进制数据
+            object_name: 对象名称
+            content_type: MIME类型
+
+        Returns:
+            str: MinIO中的对象URL
+        """
+        if not self._initialized:
+            self.initialize()
+
+        try:
+            # 使用 pending 前缀
+            pending_object_name = f"pending/{object_name}"
+
+            # 创建字节流
+            file_stream = io.BytesIO(file_data)
+            file_size = len(file_data)
+
+            # 上传文件
+            self.client.put_object(
+                bucket_name=self.bucket_name,
+                object_name=pending_object_name,
+                data=file_stream,
+                length=file_size,
+                content_type=content_type
+            )
+
+            # 生成访问URL
+            url = self._get_object_url(pending_object_name)
+            logger.info(f"Uploaded pending file to MinIO: {url}")
+            return url
+
+        except S3Error as e:
+            logger.error(f"Failed to upload pending file to MinIO: {e}")
+            raise
+
+    def delete_pending_file(self, object_name: str) -> bool:
+        """
+        删除 pending bucket 中的临时文件
+
+        Args:
+            object_name: 对象名称（不含 pending/ 前缀）
+
+        Returns:
+            bool: 删除是否成功
+        """
+        if not self._initialized:
+            self.initialize()
+
+        try:
+            # 如果传入的已经包含 pending/ 前缀，直接使用
+            if not object_name.startswith("pending/"):
+                object_name = f"pending/{object_name}"
+
+            self.client.remove_object(
+                bucket_name=self.bucket_name,
+                object_name=object_name
+            )
+            logger.info(f"Deleted pending file from MinIO: {object_name}")
+            return True
+
+        except S3Error as e:
+            logger.error(f"Failed to delete pending file from MinIO: {e}")
+            return False
 
 
 # 全局单例
@@ -246,10 +326,10 @@ def get_minio_client() -> MinIOClient:
 
 
 # 便捷函数
-def upload_chart(file_data: bytes, report_id: str, filename: str, content_type: str = "image/png") -> str:
+def upload_chart(file_data: bytes, document_id: str, filename: str, content_type: str = "image/png") -> str:
     """上传图表到MinIO的便捷函数"""
     client = get_minio_client()
-    return client.upload_chart(file_data, report_id, filename, content_type)
+    return client.upload_chart(file_data, document_id, filename, content_type)
 
 
 def delete_chart(object_name: str) -> bool:
@@ -258,7 +338,13 @@ def delete_chart(object_name: str) -> bool:
     return client.delete_chart(object_name)
 
 
-def delete_report_charts(report_id: str) -> int:
-    """删除报告所有图表的便捷函数"""
+def delete_document_charts(document_id: str) -> int:
+    """删除文档所有图表的便捷函数"""
     client = get_minio_client()
-    return client.delete_report_charts(report_id)
+    return client.delete_document_charts(document_id)
+
+
+# 兼容性别名
+def delete_report_charts(report_id: str) -> int:
+    """兼容性函数，调用 delete_document_charts"""
+    return delete_document_charts(report_id)

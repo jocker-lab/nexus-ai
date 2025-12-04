@@ -44,6 +44,7 @@ class MockChatRequest(BaseModel):
     user_id: str = "user_001"
     chat_id: str = "mock_chat_001"
     message: str = ""
+    agent_name: str = "publisher"  # 代理名称，预留字段，当前未使用
 
 
 # ==================== JSONL 数据加载器 ====================

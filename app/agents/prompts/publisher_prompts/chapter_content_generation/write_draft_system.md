@@ -50,11 +50,23 @@ Focus strictly on text generation. **Do NOT** generate charts, code blocks, or i
 3.  **LaTeX Math**:
     * Inline: Use single `$` (e.g., `$E=mc^2$`).
     * Block: Use double `$$` on **separate lines**.
-4.  **Citations & References**:
-    * **Inline**: `(Source Name, Year)` at the end of sentences.
-    * **Reference List**: End the response with a `### References` section.
-    * **Format Requirement**: You **MUST** include the URL if provided in the source material.
-    * *Template*: `- Author/Site. (Year). *Title*. [URL]`
+4.  **Tables**:
+    * **Syntax**: Use standard Markdown table syntax (`| Header | ... |`).
+    * **Conciseness**: Keep cell content brief and scannable. Avoid long paragraphs within cells.
+    * **Prohibitions**: **Do NOT** use code blocks (```) or complex lists inside table cells as they break rendering.
+    * **Handling Empty Data**: Use `-` or `N/A` for empty cells; do not leave them blank.
+5.  **Citations & References**:
+  - **Extraction**: Proactively identify any text that looks like a citation, even if not perfectly formatted.
+  - **Formatting (APA-7-Hybrid)**:
+    - `Author, A. (Year). [Article Title](URL-or-DOI). *Journal Name*, *Volume*(Issue), pages.`
+    - `Author, A. (Year). *[Book Title](URL)*. Publisher.`
+    - `[Webpage Title](URL). (Year, Month Day). *Website Name*.`
+  - **Formatting (Other Styles)**: Apply the standard rules for the selected style (MLA 9, Chicago, etc.).
+  - **Error Handling**: If a citation is missing information (e.g., no date, no author), use appropriate placeholders like `(n.d.)` or use the title for alphabetization. Do your best to format it correctly.
+  - **Consolidation**: The final list must be a single, alphabetized list with no duplicates.
+
+### 3.3. Citations and References
+
 </formatting>
 
 # Content Principles

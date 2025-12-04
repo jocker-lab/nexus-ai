@@ -20,8 +20,10 @@ export const API_ENDPOINTS = {
   chats: `${API_BASE_URL}/api/v1/chats`,
   chatStream: `${API_BASE_URL}/api/v1/chats/stream`,
 
-  // Reports 相关
-  reports: `${API_BASE_URL}/api/v1/reports`,
+  // Documents 相关 (原 Reports)
+  documents: `${API_BASE_URL}/api/v1/documents`,
+  // 兼容性别名
+  reports: `${API_BASE_URL}/api/v1/documents`,
 
   // Model Providers 相关
   modelProviders: `${API_BASE_URL}/api/v1/model-providers`,

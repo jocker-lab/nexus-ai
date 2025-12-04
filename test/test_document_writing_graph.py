@@ -286,23 +286,22 @@ async def test_document_writing_graph():
             assert "metadata" in ch_data, f"章节 {ch_id} 缺少 metadata"
             logger.info(f"  ✓ 章节 {ch_id}: {len(ch_data['content'])} 字符, 评分: {ch_data['metadata'].get('final_score', 'N/A')}")
 
-        # 检查 document_metadata
-        assert "document_metadata" in result, "缺少 document_metadata"
-        metadata = result["document_metadata"]
-        logger.info(f"  ✓ 总字数: {metadata.get('total_words', 0)}")
-        logger.info(f"  ✓ 平均评分: {metadata.get('avg_score', 0)}")
-
         # 检查 document (整合后文档)
         assert "document" in result, "缺少 document"
         document = result["document"]
         assert len(document) > 0, "document 为空"
         logger.info(f"  ✓ 最终文档长度: {len(document)} 字符")
 
-        # 检查 document_review
-        assert "document_review" in result, "缺少 document_review"
-        review = result["document_review"]
-        logger.info(f"  ✓ 审查状态: {review.get('status', 'N/A')}")
-        logger.info(f"  ✓ 整体评估: {review.get('overall_assessment', 'N/A')}")
+        # 检查 document_metadata (由 document_finalizer 生成)
+        assert "document_metadata" in result, "缺少 document_metadata"
+        metadata = result["document_metadata"]
+        logger.info(f"  ✓ 元数据状态: {metadata.get('status', 'N/A')}")
+        logger.info(f"  ✓ 文档标题: {metadata.get('title', 'N/A')}")
+        logger.info(f"  ✓ 文档分类: {metadata.get('category', 'N/A')}")
+        logger.info(f"  ✓ 文档标签: {metadata.get('tags', 'N/A')}")
+        logger.info(f"  ✓ 总字数: {metadata.get('word_count', 0)}")
+        logger.info(f"  ✓ 预估阅读时间: {metadata.get('estimated_reading_time', 0)} 分钟")
+        logger.info(f"  ✓ 核心洞察数: {len(metadata.get('key_insights', []))}")
 
         logger.info("\n" + "="*80)
         logger.success("✅ 所有测试通过！")
@@ -338,7 +337,7 @@ async def test_individual_nodes():
         chapter_dispatcher,
         chapter_aggregator,
         document_integrator,
-        document_reviewer
+        document_finalizer
     )
 
     # 创建基础 state
@@ -351,7 +350,6 @@ async def test_individual_nodes():
         "writing_principles": ["准确性", "客观性", "前瞻性"],
         "completed_chapters": {},
         "document_metadata": {},
-        "document_review": {},
         "document": "",
     }
 
@@ -420,24 +418,26 @@ async def test_individual_nodes():
         logger.error(f"  ❌ document_integrator 测试失败: {e}\n")
         integrator_result = {}
 
-    # === 测试 4: document_reviewer ===
-    logger.info("🧪 测试 document_reviewer...")
+    # === 测试 4: document_finalizer ===
+    logger.info("🧪 测试 document_finalizer...")
     try:
-        reviewer_state = {
+        finalizer_state = {
             **integrator_state,
-            "document": integrator_result.get("document", "# 测试文档\n\n这是测试内容..."),
+            "document": integrator_result.get("document", "# 测试文档\n\n这是一篇关于人工智能发展趋势的分析报告。本文将从技术演进、市场应用和未来展望三个维度进行深入分析..."),
         }
 
-        reviewer_result = await document_reviewer(reviewer_state)
-        latest_review = reviewer_result.get('latest_review')
-        if latest_review:
-            logger.info(f"  ✓ reviewer 返回审查状态: {latest_review.status}")
-            logger.info(f"  ✓ reviewer 返回评分: {latest_review.score}")
-            logger.info(f"  ✓ reviewer 返回建议数: {len(latest_review.actionable_suggestions)}")
-        logger.info(f"  ✓ reviewer 修订次数: {reviewer_result.get('revision_count')}")
-        logger.success("  ✓ document_reviewer 测试通过\n")
+        finalizer_result = await document_finalizer(finalizer_state)
+        metadata = finalizer_result.get('document_metadata', {})
+        logger.info(f"  ✓ finalizer 返回状态: {metadata.get('status', 'N/A')}")
+        logger.info(f"  ✓ finalizer 返回标题: {metadata.get('title', 'N/A')}")
+        logger.info(f"  ✓ finalizer 返回描述长度: {len(metadata.get('description', ''))}")
+        logger.info(f"  ✓ finalizer 返回分类: {metadata.get('category', 'N/A')}")
+        logger.info(f"  ✓ finalizer 返回标签: {metadata.get('tags', 'N/A')}")
+        logger.info(f"  ✓ finalizer 返回字数: {metadata.get('word_count', 0)}")
+        logger.info(f"  ✓ finalizer 返回阅读时间: {metadata.get('estimated_reading_time', 0)} 分钟")
+        logger.success("  ✓ document_finalizer 测试通过\n")
     except Exception as e:
-        logger.error(f"  ❌ document_reviewer 测试失败: {e}\n")
+        logger.error(f"  ❌ document_finalizer 测试失败: {e}\n")
 
     logger.info("="*80)
     logger.success("✅ 独立节点测试完成！")

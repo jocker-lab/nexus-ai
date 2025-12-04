@@ -498,3 +498,4 @@ class ModelFetcher:
 
 # 单例导出
 model_fetcher = ModelFetcher()
+

@@ -7,6 +7,15 @@
 @Contact :   pygao.1@outlook.com
 @License :   (C)Copyright 2025, GienTech Technology Co.,Ltd. All rights reserved.
 @Desc    :   Document Writing Main Graph
+
+简化流程（v2）：
+    role_builder → chapter_dispatcher → [Subgraphs...] → chapter_aggregator
+    → document_integrator → document_finalizer → END
+
+说明：
+    - 移除了 document_reviewer 和 document_reviser 节点
+    - 章节级别已完成审查和修订，文档级别不再重复
+    - document_finalizer 使用 with_structured_output 提取元数据
 """
 from langgraph.graph import StateGraph, END
 from loguru import logger
@@ -16,106 +25,38 @@ from app.agents.core.publisher.writing.nodes import (
     chapter_aggregator,
     chapter_dispatcher,
     document_integrator,
-    document_reviewer,
-    document_reviser,
+    document_finalizer,
     chapter_subgraph_wrapper,
 )
-
-# === 配置常量 ===
-MAX_REVISION_COUNT = 2  # 最大修订次数
-PASS_SCORE_THRESHOLD = 85  # 通过分数阈值
-
-
-def decide_after_review(state: DocumentState) -> str:
-    """
-    审查后的路由决策
-
-    决策逻辑：
-    1. 如果 status == "pass" 或 score >= 85 → 结束
-    2. 如果已达到最大修订次数 → 强制结束
-    3. 否则 → 进入修订流程
-    """
-    latest_review = state.get("latest_review")
-    revision_count = state.get("revision_count", 0)
-
-    if not latest_review:
-        logger.warning("[Router] No review result, ending flow")
-        return "end"
-
-    # 检查是否通过
-    if latest_review.status == "pass" or latest_review.score >= PASS_SCORE_THRESHOLD:
-        logger.info(
-            f"[Router] Document PASSED | "
-            f"Score: {latest_review.score} | Status: {latest_review.status}"
-        )
-        return "end"
-
-    # 检查修订次数
-    if revision_count >= MAX_REVISION_COUNT:
-        logger.warning(
-            f"[Router] Max revisions reached ({MAX_REVISION_COUNT}), forcing end"
-        )
-        return "end"
-
-    # 需要修订
-    logger.info(
-        f"[Router] Document needs revision | "
-        f"Score: {latest_review.score} | Revision: {revision_count}/{MAX_REVISION_COUNT}"
-    )
-    return "revise"
-
-
-def finalize_review(state: DocumentState) -> dict:
-    """
-    最终化审查结果节点 - 将 latest_review 转换为 document_review
-
-    这是一个轻量级节点，仅做数据转换
-    """
-    latest_review = state.get("latest_review")
-
-    if not latest_review:
-        return {
-            "document_review": {
-                "status": "unknown",
-                "overall_assessment": "No review performed",
-            }
-        }
-
-    return {
-        "document_review": {
-            "status": "completed",
-            "overall_assessment": latest_review.general_feedback,
-            "score": latest_review.score,
-            "final_status": latest_review.status,
-            "suggestions_count": len(latest_review.actionable_suggestions),
-        }
-    }
 
 
 def create_main_graph():
     """
-    创建 Main Graph
+    创建 Main Graph（简化版）
 
     流程:
         role_builder → chapter_dispatcher → [Subgraphs...] → chapter_aggregator
-        → document_integrator → document_reviewer → [revise loop] → finalize → END
+        → document_integrator → document_finalizer → END
 
-    审查流程：
-        document_reviewer → decide_after_review
-            ├── "pass" → finalize_review → END
-            └── "revise" → document_reviser → document_reviewer (loop)
+    节点说明：
+        - role_builder_node: 构建写作角色和风格
+        - chapter_dispatcher: 分发章节写作任务
+        - chapter_subgraph: 章节写作子图（包含审查修订）
+        - chapter_aggregator: 聚合已完成章节
+        - document_integrator: 智能整合文档（LLM驱动）
+        - document_finalizer: 提取元数据（description/category/tags/word_count）
     """
+    logger.info("📖 [Writing Agent] 创建文档写作图...")
+
     # === 1. 创建 StateGraph ===
     main_graph = StateGraph(DocumentState)
 
-    # === 2. 添加 Main Graph 节点 ===
+    # === 2. 添加节点 ===
     main_graph.add_node("role_builder_node", role_builder_node)
     main_graph.add_node("chapter_dispatcher", chapter_dispatcher)
     main_graph.add_node("chapter_aggregator", chapter_aggregator)
     main_graph.add_node("document_integrator", document_integrator)
-    main_graph.add_node("document_reviewer", document_reviewer)
-    main_graph.add_node("document_reviser", document_reviser)
-    main_graph.add_node("finalize_review", finalize_review)
+    main_graph.add_node("document_finalizer", document_finalizer)
 
     # === 3. 添加 Subgraph 包装节点 ===
     main_graph.add_node("chapter_subgraph", chapter_subgraph_wrapper)
@@ -123,31 +64,17 @@ def create_main_graph():
     # === 4. 设置入口点 ===
     main_graph.set_entry_point("role_builder_node")
 
-    # === 5. 添加边 ===
-
-    # 主流程边
+    # === 5. 添加边（线性流程） ===
     main_graph.add_edge("role_builder_node", "chapter_dispatcher")
     main_graph.add_edge("chapter_subgraph", "chapter_aggregator")
     main_graph.add_edge("chapter_aggregator", "document_integrator")
-    main_graph.add_edge("document_integrator", "document_reviewer")
-
-    # 审查后的条件路由
-    main_graph.add_conditional_edges(
-        "document_reviewer",
-        decide_after_review,
-        {
-            "end": "finalize_review",
-            "revise": "document_reviser",
-        }
-    )
-
-    # 修订后返回审查
-    main_graph.add_edge("document_reviser", "document_reviewer")
-
-    # 最终化后结束
-    main_graph.add_edge("finalize_review", END)
+    main_graph.add_edge("document_integrator", "document_finalizer")
+    main_graph.add_edge("document_finalizer", END)
 
     # === 6. 编译 ===
     compiled_main_graph = main_graph.compile()
+
+    logger.info("  ✓ 文档写作图编译完成")
+    logger.info("    流程: role_builder → dispatcher → subgraphs → aggregator → integrator → finalizer → END\n")
 
     return compiled_main_graph

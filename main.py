@@ -11,7 +11,7 @@ from typing import AsyncGenerator, Dict
 
 from app.config import LOCAL_BIG_MODEL_PARAMS, settings
 
-from app.api.endpoints import chats, folders, reports, model_providers
+from app.api.endpoints import chats, folders, documents, model_providers, writing_templates
 from app.api.endpoints import auth, users, groups, roles
 from loguru import logger
 # from langchain.prompts import ChatPromptTemplate
@@ -63,9 +63,12 @@ app.include_router(chats.router, prefix="/api/v1/chats", tags=["chat"])
 
 app.include_router(folders.router, prefix="/api/v1/folders", tags=["folder"])
 
-app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
+app.include_router(documents.router, prefix="/api/v1/documents", tags=["documents"])
 
 app.include_router(model_providers.router, prefix="/api/v1/model-providers", tags=["model-providers"])
+
+# 写作模版路由
+app.include_router(writing_templates.router, prefix="/api/v1/writing-templates", tags=["writing-templates"])
 
 # 认证和用户管理路由
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])

@@ -28,6 +28,7 @@ mkdir -p "$LOG_DIR"
 # PID 文件
 BACKEND_PID_FILE="${LOG_DIR}/backend.pid"
 FRONTEND_PID_FILE="${LOG_DIR}/frontend.pid"
+CELERY_PID_FILE="${LOG_DIR}/celery.pid"
 
 # 打印带颜色的消息
 print_info() {
@@ -52,12 +53,15 @@ show_help() {
 Usage: $0 [command] [options]
 
 Commands:
-    start       启动前后端服务 (默认)
+    start       启动所有服务 (后端 + 前端 + Celery)
     stop        停止所有服务
     restart     重启所有服务
     status      查看服务状态
     backend     仅启动后端服务
     frontend    仅启动前端服务
+    celery      仅启动 Celery Worker
+    celery-stop     停止 Celery Worker
+    celery-restart  重启 Celery Worker
 
 Options:
     -b, --backend-port PORT     设置后端端口 (默认: 8000)
@@ -65,10 +69,12 @@ Options:
     -h, --help                  显示帮助信息
 
 Examples:
-    $0                          # 使用默认端口启动
+    $0                          # 使用默认端口启动所有服务
     $0 start -b 8080 -f 3001    # 自定义端口启动
     $0 stop                     # 停止所有服务
     $0 status                   # 查看服务状态
+    $0 celery                   # 仅启动 Celery Worker
+    $0 celery-restart           # 重启 Celery Worker
 
 Environment Variables:
     BACKEND_PORT                后端端口 (优先级低于命令行参数)
@@ -229,6 +235,106 @@ start_frontend() {
     return 1
 }
 
+# 启动 Celery Worker
+start_celery() {
+    print_info "启动 Celery Worker..."
+
+    cd "$PROJECT_ROOT"
+
+    # 激活 conda 环境 (如果存在)
+    if command -v conda &> /dev/null; then
+        print_info "激活 conda 环境: nexus-ai"
+        eval "$(conda shell.bash hook)"
+        conda activate nexus-ai 2>/dev/null || print_warning "conda 环境 nexus-ai 不存在，使用当前环境"
+    fi
+
+    # 检查是否已有 Celery 进程在运行
+    if [ -f "$CELERY_PID_FILE" ]; then
+        local old_pid=$(cat "$CELERY_PID_FILE")
+        if ps -p $old_pid > /dev/null 2>&1; then
+            print_warning "Celery Worker 已在运行 (PID: $old_pid)"
+            return 0
+        fi
+    fi
+
+    # 启动 Celery Worker
+    # -A: 指定 Celery 应用
+    # -l: 日志级别
+    # -c: 并发数 (可根据需要调整)
+    # --pidfile: PID 文件
+    # --pool=solo: 单进程模式，避免 macOS fork 问题（Docling 等库不兼容 fork）
+    # 注意：solo 模式下 --concurrency 无效，任务串行执行
+    nohup celery -A app.tasks.celery_app worker \
+        --loglevel=info \
+        --pool=solo \
+        --pidfile="$CELERY_PID_FILE" \
+        > "$LOG_DIR/celery.log" 2>&1 &
+
+    # 等待 Celery 启动
+    print_info "等待 Celery Worker 启动..."
+    local max_retries=10
+    local retry=0
+    while [ $retry -lt $max_retries ]; do
+        sleep 1
+        if [ -f "$CELERY_PID_FILE" ] && ps -p $(cat "$CELERY_PID_FILE" 2>/dev/null) > /dev/null 2>&1; then
+            print_success "Celery Worker 启动成功 (PID: $(cat $CELERY_PID_FILE))"
+            print_info "Celery 日志: $LOG_DIR/celery.log"
+            return 0
+        fi
+        # 检查日志中是否有启动成功标志
+        if grep -q "celery@.*ready\|Worker.*ready" "$LOG_DIR/celery.log" 2>/dev/null; then
+            print_success "Celery Worker 启动成功"
+            print_info "Celery 日志: $LOG_DIR/celery.log"
+            return 0
+        fi
+        retry=$((retry + 1))
+        print_info "等待中... ($retry/$max_retries)"
+    done
+
+    # 最终检查
+    if grep -q "celery@.*ready\|Worker.*ready" "$LOG_DIR/celery.log" 2>/dev/null; then
+        print_success "Celery Worker 启动成功 (通过日志确认)"
+        return 0
+    fi
+
+    print_error "Celery Worker 启动失败，请检查日志: $LOG_DIR/celery.log"
+    return 1
+}
+
+# 停止 Celery Worker
+stop_celery() {
+    print_info "停止 Celery Worker..."
+
+    if [ -f "$CELERY_PID_FILE" ]; then
+        local pid=$(cat "$CELERY_PID_FILE")
+        if ps -p $pid > /dev/null 2>&1; then
+            # 优雅关闭 Celery
+            kill -TERM $pid 2>/dev/null
+            sleep 2
+            # 如果还在运行，强制终止
+            if ps -p $pid > /dev/null 2>&1; then
+                kill -9 $pid 2>/dev/null
+            fi
+            print_success "Celery Worker 已停止 (PID: $pid)"
+        else
+            print_warning "Celery Worker 进程不存在"
+        fi
+        rm -f "$CELERY_PID_FILE"
+    else
+        print_warning "Celery Worker PID 文件不存在"
+    fi
+
+    # 额外清理可能残留的 Celery 进程
+    pkill -f "celery.*app.tasks.celery_app" 2>/dev/null || true
+}
+
+# 重启 Celery Worker
+restart_celery() {
+    stop_celery
+    sleep 2
+    start_celery
+}
+
 # 停止服务
 stop_service() {
     local pid_file=$1
@@ -258,10 +364,12 @@ stop_all() {
     print_info "停止所有服务..."
     stop_service "$BACKEND_PID_FILE" "后端服务"
     stop_service "$FRONTEND_PID_FILE" "前端服务"
+    stop_celery
 
     # 额外清理可能残留的进程
     pkill -f "uvicorn main:app" 2>/dev/null || true
     pkill -f "next dev" 2>/dev/null || true
+    pkill -f "celery.*app.tasks.celery_app" 2>/dev/null || true
 
     print_success "所有服务已停止"
 }
@@ -299,8 +407,27 @@ show_status() {
         print_warning "前端服务: 未启动"
     fi
 
+    # Celery Worker 状态
+    if [ -f "$CELERY_PID_FILE" ]; then
+        local celery_pid=$(cat "$CELERY_PID_FILE")
+        if ps -p $celery_pid > /dev/null 2>&1; then
+            print_success "Celery Worker: 运行中 (PID: $celery_pid)"
+            # 显示 worker 并发数
+            local concurrency=$(ps aux | grep "celery.*worker" | grep -v grep | wc -l)
+            print_info "  Worker 进程数: $concurrency"
+        else
+            print_error "Celery Worker: 已停止"
+        fi
+    else
+        print_warning "Celery Worker: 未启动"
+    fi
+
     echo ""
-    echo "日志文件位置: $LOG_DIR/"
+    echo "日志文件位置:"
+    echo "  后端日志: $LOG_DIR/backend.log"
+    echo "  前端日志: $LOG_DIR/frontend.log"
+    echo "  Celery 日志: $LOG_DIR/celery.log"
+    echo "  模板任务日志: $LOG_DIR/template_tasks.log"
     echo ""
 }
 
@@ -315,6 +442,8 @@ start_all() {
     start_backend
     echo ""
     start_frontend
+    echo ""
+    start_celery
 
     echo ""
     echo "======================================"
@@ -322,7 +451,8 @@ start_all() {
     echo ""
     print_info "后端: http://localhost:$BACKEND_PORT"
     print_info "前端: http://localhost:$FRONTEND_PORT"
-    print_info "日志: $LOG_DIR/"
+    print_info "Celery 日志: $LOG_DIR/celery.log"
+    print_info "日志目录: $LOG_DIR/"
     echo "======================================"
 }
 

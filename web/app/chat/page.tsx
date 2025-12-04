@@ -9,6 +9,7 @@ import { SessionContextMenu, ContextMenuItem } from './components/SessionContext
 import { RenameDialog } from './components/RenameDialog';
 import { InputEnhancementsMenu, InputEnhancement } from './components/InputEnhancementsMenu';
 import ChatMarkdown from './components/ChatMarkdown';
+import Link from 'next/link';
 import { API_ENDPOINTS } from '@/lib/config';
 import { logout } from '@/lib/auth/api';
 import { useRouter } from 'next/navigation';
@@ -2629,14 +2630,103 @@ export default function ChatPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center py-4 gap-3"
+                className="flex flex-col items-center py-4 gap-4"
               >
-                <div className="w-10 h-10 rounded-xl bg-[var(--nexus-surface)] flex items-center justify-center" title={`${sessions.length} 个对话`}>
-                  <svg className="w-5 h-5 text-[var(--text-tertiary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
+                {/* Sessions Icon */}
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--nexus-surface)] flex items-center justify-center" title={`${sessions.length} 个对话`}>
+                    <svg className="w-5 h-5 text-[var(--text-tertiary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                  </div>
+                  <span className="text-[10px] text-[var(--text-tertiary)]">{sessions.length}</span>
                 </div>
-                <span className="text-[10px] text-[var(--text-tertiary)]">{sessions.length}</span>
+
+                {/* Report Center - Nexus Hexagon Button */}
+                <Link href="/center">
+                  <motion.div
+                    className="group relative cursor-pointer"
+                    whileHover={{ scale: 1.08 }}
+                    whileTap={{ scale: 0.95 }}
+                    title="报告中心"
+                  >
+                    {/* Outer Glow Ring - Breathing Animation */}
+                    <motion.div
+                      className="absolute inset-[-3px] rounded-xl opacity-40"
+                      style={{
+                        background: 'linear-gradient(135deg, var(--nexus-cyan), var(--nexus-violet))',
+                        filter: 'blur(6px)',
+                      }}
+                      animate={{
+                        opacity: [0.3, 0.5, 0.3],
+                        scale: [1, 1.05, 1],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                      }}
+                    />
+                    {/* Main Button - Hexagon-inspired shape */}
+                    <div className="relative w-10 h-10 rounded-xl overflow-hidden">
+                      {/* Animated Border */}
+                      <div
+                        className="absolute inset-0 rounded-xl p-[1px]"
+                        style={{
+                          background: 'linear-gradient(135deg, var(--nexus-cyan), var(--nexus-violet), var(--nexus-cyan))',
+                          backgroundSize: '200% 200%',
+                        }}
+                      >
+                        <div className="w-full h-full rounded-[10px] bg-[var(--nexus-abyss)] group-hover:bg-[var(--nexus-surface)] transition-colors duration-300 flex items-center justify-center">
+                          {/* Icon with Data Flow Effect */}
+                          <motion.svg
+                            className="w-5 h-5 relative z-10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            style={{ color: 'var(--nexus-cyan)' }}
+                          >
+                            {/* Stacked Documents Icon */}
+                            <motion.path
+                              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              fill="none"
+                            />
+                            <motion.path
+                              d="M14 2v6h6"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            {/* Data Lines */}
+                            <motion.path
+                              d="M8 13h8M8 17h5"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              initial={{ pathLength: 0, opacity: 0 }}
+                              animate={{ pathLength: 1, opacity: 1 }}
+                              transition={{ duration: 0.5, delay: 0.2 }}
+                            />
+                            {/* Spark/Generate indicator */}
+                            <motion.circle
+                              cx="18"
+                              cy="6"
+                              r="2"
+                              fill="var(--nexus-violet)"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: [0, 1.2, 1] }}
+                              transition={{ duration: 0.4, delay: 0.5 }}
+                            />
+                          </motion.svg>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </Link>
               </motion.div>
             ) : sessionsLoading ? (
               <motion.div key="loading" className="flex items-center justify-center py-8">

@@ -83,6 +83,54 @@ class Settings(BaseSettings):
         description="是否使用 HTTPS 连接 MinIO"
     )
 
+    # ==================== Milvus 向量数据库配置（从 .env 读取）====================
+    MILVUS_HOST: str = Field(
+        "localhost",
+        description="Milvus 服务主机"
+    )
+
+    MILVUS_PORT: int = Field(
+        19530,
+        description="Milvus 服务端口"
+    )
+
+    MILVUS_COLLECTION: str = Field(
+        "document_vectors",
+        description="Milvus 默认集合名称"
+    )
+
+    # ==================== Embedding 服务配置（从 .env 读取）====================
+    EMBEDDING_API_URL: str = Field(
+        "http://localhost:8080/embedding",
+        description="Embedding 服务 API 地址"
+    )
+
+    EMBEDDING_DIMENSION: int = Field(
+        1024,
+        description="Embedding 向量维度"
+    )
+
+    # ==================== Redis 配置（从 .env 读取）====================
+    REDIS_HOST: str = Field(
+        "localhost",
+        description="Redis 服务主机"
+    )
+
+    REDIS_PORT: int = Field(
+        6379,
+        description="Redis 服务端口"
+    )
+
+    REDIS_DB_BROKER: int = Field(
+        0,
+        description="Celery Broker 使用的 Redis 数据库"
+    )
+
+    REDIS_DB_BACKEND: int = Field(
+        1,
+        description="Celery Backend 使用的 Redis 数据库"
+    )
+
     # ==================== 其他配置（从 .env 读取）====================
     LANGSMITH_PROJECT: str = Field(
         "nexus-ai",
@@ -166,6 +214,78 @@ class Settings(BaseSettings):
             params['openai_api_key'] = self.OPENAI_API_KEY
 
         return params
+
+    # ==================== Milvus 配置（从 yaml）====================
+    @property
+    def MILVUS_INDEX_CONFIG(self) -> Dict[str, Any]:
+        """Milvus 索引配置"""
+        return self._yaml_config.get('milvus', {}).get('index', {
+            'metric_type': 'COSINE',
+            'index_type': 'IVF_FLAT',
+            'nlist': 128
+        })
+
+    @property
+    def MILVUS_SEARCH_CONFIG(self) -> Dict[str, Any]:
+        """Milvus 搜索配置"""
+        return self._yaml_config.get('milvus', {}).get('search', {
+            'nprobe': 10
+        })
+
+    # ==================== Embedding 配置（从 yaml）====================
+    @property
+    def EMBEDDING_TIMEOUT(self) -> int:
+        """Embedding 请求超时时间"""
+        return self._yaml_config.get('embedding', {}).get('timeout', 60)
+
+    @property
+    def EMBEDDING_BATCH_SIZE(self) -> int:
+        """Embedding 批量处理大小"""
+        return self._yaml_config.get('embedding', {}).get('batch_size', 32)
+
+    # ==================== Celery 配置（从 yaml）====================
+    @property
+    def CELERY_CONFIG(self) -> Dict[str, Any]:
+        """Celery 配置"""
+        return self._yaml_config.get('celery', {})
+
+    @property
+    def CELERY_TASK_TIME_LIMIT(self) -> int:
+        """Celery 任务超时时间"""
+        return self._yaml_config.get('celery', {}).get('task_time_limit', 600)
+
+    # ==================== Docling 配置（从 yaml）====================
+    @property
+    def DOCLING_TIMEOUT(self) -> int:
+        """文档解析超时时间"""
+        return self._yaml_config.get('docling', {}).get('timeout', 120)
+
+    @property
+    def DOCLING_MAX_WORKERS(self) -> int:
+        """文档解析线程池大小"""
+        return self._yaml_config.get('docling', {}).get('max_workers', 5)
+
+    # ==================== Template 配置（从 yaml）====================
+    @property
+    def TEMPLATE_COLLECTION_NAME(self) -> str:
+        """模版向量集合名称"""
+        return self._yaml_config.get('template', {}).get('collection_name', 'template_vectors')
+
+    @property
+    def TEMPLATE_DUPLICATE_THRESHOLD(self) -> float:
+        """模版重复检测阈值"""
+        return self._yaml_config.get('template', {}).get('duplicate_threshold', 0.95)
+
+    # ==================== Redis URL 生成 ====================
+    @property
+    def CELERY_BROKER_URL(self) -> str:
+        """Celery Broker URL"""
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB_BROKER}"
+
+    @property
+    def CELERY_RESULT_BACKEND(self) -> str:
+        """Celery Result Backend URL"""
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB_BACKEND}"
 
     # ==================== 向后兼容属性 ====================
     @property
