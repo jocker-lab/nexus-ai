@@ -11,27 +11,27 @@ export const API_BASE_URL =
   'http://localhost:8080'
 
 // API 路径
-// 注意：路径末尾带斜杠，避免 FastAPI 307 重定向
+// 注意：不带尾部斜杠，因为会被继续拼接子路径（如 auth + /login）
 export const API_ENDPOINTS = {
   // 认证相关
-  auth: `${API_BASE_URL}/api/v1/auth/`,
+  auth: `${API_BASE_URL}/api/v1/auth`,
 
   // 用户管理
-  users: `${API_BASE_URL}/api/v1/users/`,
-  groups: `${API_BASE_URL}/api/v1/groups/`,
-  roles: `${API_BASE_URL}/api/v1/roles/`,
+  users: `${API_BASE_URL}/api/v1/users`,
+  groups: `${API_BASE_URL}/api/v1/groups`,
+  roles: `${API_BASE_URL}/api/v1/roles`,
 
   // Chat 相关
-  chats: `${API_BASE_URL}/api/v1/chats/`,
-  chatStream: `${API_BASE_URL}/api/v1/chats/stream/`,
+  chats: `${API_BASE_URL}/api/v1/chats`,
+  chatStream: `${API_BASE_URL}/api/v1/chats/stream`,
 
   // Documents 相关 (原 Reports)
-  documents: `${API_BASE_URL}/api/v1/documents/`,
+  documents: `${API_BASE_URL}/api/v1/documents`,
   // 兼容性别名
-  reports: `${API_BASE_URL}/api/v1/documents/`,
+  reports: `${API_BASE_URL}/api/v1/documents`,
 
   // Model Providers 相关
-  modelProviders: `${API_BASE_URL}/api/v1/model-providers/`,
+  modelProviders: `${API_BASE_URL}/api/v1/model-providers`,
 } as const
 
 // 构建带查询参数的 URL
