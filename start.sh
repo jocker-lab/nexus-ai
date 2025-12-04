@@ -30,6 +30,9 @@ BACKEND_PID_FILE="${LOG_DIR}/backend.pid"
 FRONTEND_PID_FILE="${LOG_DIR}/frontend.pid"
 CELERY_PID_FILE="${LOG_DIR}/celery.pid"
 
+# 自动模式（重启时自动杀掉占用端口的进程，不询问用户）
+AUTO_KILL_PORT=false
+
 # 打印带颜色的消息
 print_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -106,6 +109,19 @@ handle_port_conflict() {
     if check_port $port; then
         print_warning "端口 $port 已被占用!"
         print_info "占用进程: $(get_port_process $port)"
+
+        # 自动模式：直接杀掉占用进程（用于 restart 场景）
+        if [ "$AUTO_KILL_PORT" = true ]; then
+            local pids=$(lsof -Pi :$port -sTCP:LISTEN -t 2>/dev/null)
+            if [ -n "$pids" ]; then
+                echo "$pids" | xargs kill -9 2>/dev/null
+                sleep 1
+                print_success "已自动终止占用端口 $port 的进程"
+            fi
+            return 0
+        fi
+
+        # 交互模式：询问用户
         read -p "是否终止占用进程并继续? (y/N): " choice
         case "$choice" in
             y|Y)
@@ -461,7 +477,7 @@ COMMAND="start"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        start|stop|restart|status|backend|frontend)
+        start|stop|restart|status|backend|frontend|celery|celery-stop|celery-restart)
             COMMAND=$1
             shift
             ;;
@@ -509,6 +525,8 @@ case $COMMAND in
     restart)
         stop_all
         sleep 2
+        # 重启时自动杀掉占用端口的进程，无需询问用户
+        AUTO_KILL_PORT=true
         start_all
         ;;
     status)
@@ -519,5 +537,14 @@ case $COMMAND in
         ;;
     frontend)
         start_frontend
+        ;;
+    celery)
+        start_celery
+        ;;
+    celery-stop)
+        stop_celery
+        ;;
+    celery-restart)
+        restart_celery
         ;;
 esac
