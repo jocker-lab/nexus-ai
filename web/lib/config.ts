@@ -1,43 +1,38 @@
 /**
  * 应用配置
- * 从环境变量读取，支持动态配置后端地址
+ *
+ * 使用 Next.js rewrites 代理 API 请求，前端统一使用相对路径
+ * 后端地址在 next.config.ts 中配置
  */
 
-// 判断是否在服务端运行
-const isServer = typeof window === 'undefined'
+// API 基础 URL：使用空字符串（相对路径）
+// Next.js rewrites 会自动将 /api/v1/* 请求代理到后端
+export const API_BASE_URL = ''
 
-// 后端 API 基础 URL
-// - 浏览器端：使用 window.location.origin 保留端口号（解决非标准端口丢失问题）
-// - 服务端：使用完整地址（API Route 代理需要）
-export const API_BASE_URL = isServer
-  ? (process.env.API_SERVER_URL || 'http://127.0.0.1:8080')
-  : (typeof window !== 'undefined' ? window.location.origin : '')
-
-// API 路径
-// 注意：不带尾部斜杠，因为会被继续拼接子路径（如 auth + /login）
+// API 端点（相对路径）
 export const API_ENDPOINTS = {
   // 认证相关
-  auth: `${API_BASE_URL}/api/v1/auth`,
+  auth: '/api/v1/auth',
 
   // 用户管理
-  users: `${API_BASE_URL}/api/v1/users`,
-  groups: `${API_BASE_URL}/api/v1/groups`,
-  roles: `${API_BASE_URL}/api/v1/roles`,
+  users: '/api/v1/users',
+  groups: '/api/v1/groups',
+  roles: '/api/v1/roles',
 
   // Chat 相关
-  chats: `${API_BASE_URL}/api/v1/chats`,
-  chatStream: `${API_BASE_URL}/api/v1/chats/stream`,
+  chats: '/api/v1/chats',
+  chatStream: '/api/v1/chats/stream',
 
   // Documents 相关 (原 Reports)
-  documents: `${API_BASE_URL}/api/v1/documents`,
+  documents: '/api/v1/documents',
   // 兼容性别名
-  reports: `${API_BASE_URL}/api/v1/documents`,
+  reports: '/api/v1/documents',
 
   // Model Providers 相关
-  modelProviders: `${API_BASE_URL}/api/v1/model-providers`,
+  modelProviders: '/api/v1/model-providers',
 
   // Writing Templates 相关
-  writingTemplates: `${API_BASE_URL}/api/v1/writing-templates`,
+  writingTemplates: '/api/v1/writing-templates',
 } as const
 
 // 构建带查询参数的 URL
