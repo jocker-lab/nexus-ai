@@ -3,12 +3,15 @@
  * 从环境变量读取，支持动态配置后端地址
  */
 
+// 判断是否在服务端运行
+const isServer = typeof window === 'undefined'
+
 // 后端 API 基础 URL
-// 兼容两种环境变量名：NEXT_PUBLIC_API_URL 和 NEXT_PUBLIC_BACKEND_URL
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  'http://localhost:8080'
+// - 浏览器端：使用相对路径（空字符串），由 Nginx 反向代理转发到后端
+// - 服务端：使用完整地址（API Route 代理需要）
+export const API_BASE_URL = isServer
+  ? (process.env.API_SERVER_URL || 'http://127.0.0.1:8080')
+  : ''
 
 // API 路径
 // 注意：不带尾部斜杠，因为会被继续拼接子路径（如 auth + /login）
