@@ -35,6 +35,9 @@ export const API_ENDPOINTS = {
 
   // Model Providers 相关
   modelProviders: `${API_BASE_URL}/api/v1/model-providers`,
+
+  // Writing Templates 相关
+  writingTemplates: `${API_BASE_URL}/api/v1/writing-templates`,
 } as const
 
 // 构建带查询参数的 URL
