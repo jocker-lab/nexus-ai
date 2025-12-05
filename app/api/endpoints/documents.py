@@ -31,6 +31,7 @@ router = APIRouter()
 
 # ==================== 文档基础操作 ====================
 
+@router.post("", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 async def create_document(
     document_data: DocumentCreate,
@@ -89,6 +90,7 @@ async def get_document(
     return document
 
 
+@router.get("", response_model=List[DocumentListItem])
 @router.get("/", response_model=List[DocumentListItem])
 async def list_documents(
     user_id: str = "user-123",

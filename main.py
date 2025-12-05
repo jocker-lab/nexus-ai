@@ -39,7 +39,11 @@ async def lifespan(app: FastAPI):
     logger.info("Application shutting down...")
 
 
-app = FastAPI(title="LangGraph API Service", lifespan=lifespan)
+app = FastAPI(
+    title="LangGraph API Service",
+    lifespan=lifespan,
+    redirect_slashes=False,  # 禁用斜杠重定向，避免 307 问题
+)
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { API_BASE_URL } from '@/lib/config'
+import { BACKEND_URL } from '@/lib/config'
 
 export async function GET(
   request: NextRequest,
@@ -19,8 +19,8 @@ export async function GET(
       headers['Authorization'] = authHeader
     }
 
-    // 从后端API获取文档数据
-    const response = await fetch(`${API_BASE_URL}/api/v1/documents/${documentId}`, {
+    // 从后端API获取文档数据（服务端需要完整 URL）
+    const response = await fetch(`${BACKEND_URL}/api/v1/documents/${documentId}`, {
       headers,
       cache: 'no-store', // 不缓存，确保获取最新数据
     })

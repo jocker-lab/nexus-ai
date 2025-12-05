@@ -1,3 +1,4 @@
+
 """
 Model Provider API Endpoints
 模型供应商配置管理 API
@@ -29,6 +30,7 @@ router = APIRouter()
 
 # ===================== List/Get Endpoints =====================
 
+@router.get("", response_model=List[ModelProviderResponse])
 @router.get("/", response_model=List[ModelProviderResponse])
 async def get_user_providers(
     user_id: str = "user-123",
@@ -87,6 +89,7 @@ async def get_default_provider(provider_type: str, user_id: str = "user-123"):
 
 # ===================== Create Endpoints =====================
 
+@router.post("", response_model=ModelProviderResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=ModelProviderResponse, status_code=status.HTTP_201_CREATED)
 async def create_provider(form_data: ModelProviderCreateForm, user_id: str = "user-123"):
     """

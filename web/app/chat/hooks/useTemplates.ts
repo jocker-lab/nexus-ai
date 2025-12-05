@@ -3,10 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createAuthHeaders } from '@/lib/api'
 import { useAuthStore } from '@/lib/stores/auth'
-import { API_BASE_URL } from '@/lib/config'
-
-// API 端点
-const TEMPLATES_API = `${API_BASE_URL}/api/v1/writing-templates`
+import { API_ENDPOINTS, buildUrl } from '@/lib/config'
 
 // 章节信息接口
 export interface SectionInfo {
@@ -60,12 +57,11 @@ export function useTemplates(): UseTemplatesReturn {
       setLoading(true)
       setError(null)
 
-      const url = new URL(TEMPLATES_API)
-      if (user?.id) {
-        url.searchParams.set('user_id', user.id)
-      }
+      const url = buildUrl(API_ENDPOINTS.writingTemplates, {
+        user_id: user?.id,
+      })
 
-      const response = await fetch(url.toString(), {
+      const response = await fetch(url, {
         headers: createAuthHeaders(),
       })
 
@@ -94,12 +90,11 @@ export function useTemplates(): UseTemplatesReturn {
   // 删除模版
   const deleteTemplate = useCallback(async (templateId: string): Promise<boolean> => {
     try {
-      const url = new URL(`${TEMPLATES_API}/${templateId}`)
-      if (user?.id) {
-        url.searchParams.set('user_id', user.id)
-      }
+      const url = buildUrl(`${API_ENDPOINTS.writingTemplates}/${templateId}`, {
+        user_id: user?.id,
+      })
 
-      const response = await fetch(url.toString(), {
+      const response = await fetch(url, {
         method: 'DELETE',
         headers: createAuthHeaders(),
       })
@@ -120,12 +115,11 @@ export function useTemplates(): UseTemplatesReturn {
   // 使用模版（增加使用次数）
   const useTemplate = useCallback(async (templateId: string): Promise<WritingTemplate | null> => {
     try {
-      const url = new URL(`${TEMPLATES_API}/${templateId}/use`)
-      if (user?.id) {
-        url.searchParams.set('user_id', user.id)
-      }
+      const url = buildUrl(`${API_ENDPOINTS.writingTemplates}/${templateId}/use`, {
+        user_id: user?.id,
+      })
 
-      const response = await fetch(url.toString(), {
+      const response = await fetch(url, {
         method: 'POST',
         headers: createAuthHeaders(),
       })
@@ -155,12 +149,11 @@ export function useTemplates(): UseTemplatesReturn {
   // 获取单个模版详情
   const getTemplateById = useCallback(async (templateId: string): Promise<WritingTemplate | null> => {
     try {
-      const url = new URL(`${TEMPLATES_API}/${templateId}`)
-      if (user?.id) {
-        url.searchParams.set('user_id', user.id)
-      }
+      const url = buildUrl(`${API_ENDPOINTS.writingTemplates}/${templateId}`, {
+        user_id: user?.id,
+      })
 
-      const response = await fetch(url.toString(), {
+      const response = await fetch(url, {
         headers: createAuthHeaders(),
       })
 

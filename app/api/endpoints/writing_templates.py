@@ -203,6 +203,7 @@ async def get_parse_progress(
 
 # ==================== 模版基础操作 ====================
 
+@router.post("", response_model=WritingTemplateResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=WritingTemplateResponse, status_code=status.HTTP_201_CREATED)
 async def create_template(
     template_data: WritingTemplateCreate,
@@ -255,6 +256,7 @@ async def get_template(
     return template
 
 
+@router.get("", response_model=WritingTemplateListResponse)
 @router.get("/", response_model=WritingTemplateListResponse)
 async def list_templates(
     user_id: str = "user-123",

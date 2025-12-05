@@ -31,6 +31,7 @@ router = APIRouter()
 
 # ==================== 报告基础操作 ====================
 
+@router.post("", response_model=ReportResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=ReportResponse, status_code=status.HTTP_201_CREATED)
 async def create_report(
     report_data: ReportCreate,
@@ -76,6 +77,7 @@ async def get_report(
     return report
 
 
+@router.get("", response_model=List[ReportListItem])
 @router.get("/", response_model=List[ReportListItem])
 async def list_reports(
     user_id: str = "user-123",

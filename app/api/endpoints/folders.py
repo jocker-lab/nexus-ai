@@ -20,6 +20,7 @@ from app.constants import ERROR_MESSAGES
 router = APIRouter()
 
 
+@router.get("", response_model=list[FolderModel])
 @router.get("/", response_model=list[FolderModel])
 async def get_folders(user_id: str):
     """
@@ -48,6 +49,7 @@ async def get_folders(user_id: str):
     ]
 
 
+@router.post("", response_model=FolderModel)
 @router.post("/", response_model=FolderModel)
 async def create_folder(form_data: FolderForm, user_id: str):
     """
