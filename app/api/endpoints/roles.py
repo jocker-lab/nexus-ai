@@ -50,6 +50,7 @@ def _role_to_response(role) -> RoleResponse:
 
 # ==================== 角色管理 ====================
 
+@router.get("", response_model=RoleListResponse)
 @router.get("/", response_model=RoleListResponse)
 async def list_roles(
     page: int = Query(1, ge=1),
@@ -112,6 +113,7 @@ async def get_role(
     return _role_to_response(role)
 
 
+@router.post("", response_model=RoleResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=RoleResponse, status_code=status.HTTP_201_CREATED)
 async def create_role(
     request: RoleCreateRequest,

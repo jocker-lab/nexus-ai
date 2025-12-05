@@ -39,6 +39,7 @@ def _group_to_response(group) -> GroupResponse:
 
 
 @router.get("", response_model=GroupListResponse)
+@router.get("/", response_model=GroupListResponse)
 async def list_groups(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -101,6 +102,7 @@ async def get_group(
 
 
 @router.post("", response_model=GroupResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=GroupResponse, status_code=status.HTTP_201_CREATED)
 async def create_group(
     request: GroupCreateRequest,
     current_user: User = Depends(require_permissions(["group:manage"]))

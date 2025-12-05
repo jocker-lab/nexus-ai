@@ -40,6 +40,7 @@ def _user_to_response(user: User) -> UserResponse:
     )
 
 
+@router.get("", response_model=UserListResponse)
 @router.get("/", response_model=UserListResponse)
 async def list_users(
     page: int = Query(1, ge=1),
@@ -88,6 +89,7 @@ async def get_user(
     return _user_to_response(user)
 
 
+@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     request: UserCreateRequest,
