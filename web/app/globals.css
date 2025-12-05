@@ -419,11 +419,15 @@ code, pre {
 
 /* Icon Button */
 .nexus-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.625rem;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
+  transition: all 0.2s ease;
 }
 
 .nexus-btn-icon:hover {

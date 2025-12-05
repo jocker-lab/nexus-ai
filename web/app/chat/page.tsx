@@ -2139,55 +2139,133 @@ const SettingsModal = ({ isOpen, onClose, activeTab, onTabChange }: SettingsModa
 };
 
 // ============================================
-// QUICK ACTION CARDS (Empty State)
+// AGENT MODE DEFINITIONS
 // ============================================
 
-const quickActions = [
+type AgentMode = 'chat' | 'research' | 'analysis' | 'report' | 'creative';
+
+interface AgentModeConfig {
+  id: AgentMode;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  color: string;
+}
+
+// 功能模式配置（不包含默认的对话模式）
+const agentModes: AgentModeConfig[] = [
   {
+    id: 'research',
+    label: '深度研究',
+    description: '联网搜索，深度调研分析',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
-        <circle cx="11" cy="11" r="8"/>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
+        <circle cx="11" cy="11" r="7"/>
         <path d="m21 21-4.35-4.35"/>
         <path d="M11 8v6M8 11h6"/>
       </svg>
     ),
-    label: '深度研究',
-    color: 'var(--nexus-cyan)'
+    color: 'var(--nexus-cyan)',
   },
   {
+    id: 'analysis',
+    label: '数据分析',
+    description: '数据处理与可视化分析',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
         <path d="M3 3v18h18"/>
         <path d="M18 17V9"/>
         <path d="M13 17V5"/>
         <path d="M8 17v-3"/>
       </svg>
     ),
-    label: '数据分析',
-    color: 'var(--nexus-blue)'
+    color: 'var(--nexus-blue)',
   },
   {
+    id: 'report',
+    label: '报告生成',
+    description: '专业报告与文档生成',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>
         <line x1="16" y1="13" x2="8" y2="13"/>
         <line x1="16" y1="17" x2="8" y2="17"/>
       </svg>
     ),
-    label: '报告生成',
-    color: 'var(--nexus-violet)'
+    color: 'var(--nexus-violet)',
   },
   {
+    id: 'creative',
+    label: '创意激发',
+    description: '头脑风暴，创意生成',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
         <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
       </svg>
     ),
-    label: '创意激发',
-    color: 'var(--nexus-magenta)'
+    color: 'var(--nexus-magenta)',
   },
 ];
+
+// ============================================
+// AGENT MODE SELECTOR COMPONENT
+// ============================================
+
+interface AgentModeSelectorProps {
+  selectedMode: AgentMode;
+  onModeChange: (mode: AgentMode) => void;
+  disabled?: boolean;
+}
+
+const AgentModeSelector: React.FC<AgentModeSelectorProps> = ({ selectedMode, onModeChange, disabled }) => {
+  const handleModeClick = (modeId: AgentMode) => {
+    if (disabled) return;
+    // 点击已选中的模式则取消选择（回到默认对话模式）
+    if (selectedMode === modeId) {
+      onModeChange('chat');
+    } else {
+      onModeChange(modeId);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-2 mb-3">
+      {agentModes.map((mode) => {
+        const isSelected = selectedMode === mode.id;
+        return (
+          <motion.button
+            key={mode.id}
+            onClick={() => handleModeClick(mode.id)}
+            disabled={disabled}
+            className={`
+              relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium
+              transition-all duration-200 group
+              ${isSelected
+                ? 'text-white'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--nexus-surface)]/40 hover:bg-[var(--nexus-surface)]/70 border border-[var(--border-subtle)] hover:border-[var(--border-default)]'
+              }
+              ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+            `}
+            style={{
+              background: isSelected ? `linear-gradient(135deg, ${mode.color}, ${mode.color}cc)` : undefined,
+              boxShadow: isSelected ? `0 4px 16px ${mode.color}50` : undefined,
+              borderColor: isSelected ? 'transparent' : undefined,
+            }}
+            whileHover={!disabled ? { scale: 1.03, y: -1 } : {}}
+            whileTap={!disabled ? { scale: 0.97 } : {}}
+            title={mode.description}
+          >
+            <span style={{ color: isSelected ? 'white' : mode.color }}>
+              {mode.icon}
+            </span>
+            <span>{mode.label}</span>
+          </motion.button>
+        );
+      })}
+    </div>
+  );
+};
 
 // ============================================
 // MAIN CHAT PAGE COMPONENT
@@ -2259,6 +2337,9 @@ export default function ChatPage() {
   const [selectedModel, setSelectedModel] = useState<{ id: string; name: string; provider: string } | null>(null);
   const [availableModels, setAvailableModels] = useState<Array<{ id: string; name: string; provider: string; providerName: string; size?: string }>>([]);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
+
+  // Agent mode state
+  const [agentMode, setAgentMode] = useState<AgentMode>('chat');
 
   // 获取已配置的模型供应商
   const { providers: configuredProviders, getAvailableModels: fetchProviderModels } = useModelProviders();
@@ -2922,66 +3003,74 @@ export default function ChatPage() {
         {/* Chat Area */}
         <div ref={chatAreaRef} className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
-            /* Empty State */
+            /* Empty State - 简化版，主要引导用户选择下方的模式 */
             <div className="flex flex-col items-center justify-center h-full px-6">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', duration: 0.8 }}
-                className="mb-6"
-              >
-                <div className="w-20 h-20 rounded-2xl bg-gradient-neural animate-neural-pulse flex items-center justify-center">
-                  <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              {(() => {
+                const currentMode = agentModes.find(m => m.id === agentMode);
+                const isDefaultChat = agentMode === 'chat';
+                const displayColor = currentMode?.color || 'var(--nexus-cyan)';
+                const displayLabel = currentMode?.label || '智能对话';
+                const displayDesc = currentMode?.description || '多智能体AI助手，支持深度研究、数据分析与智能报告生成';
+                const displayIcon = currentMode?.icon || (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                   </svg>
-                </div>
-              </motion.div>
+                );
 
-              <motion.h2
-                className="text-2xl font-bold mb-2"
-                style={{ fontFamily: 'Orbitron, sans-serif' }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                开启 <span className="text-gradient-neural">智能对话</span>
-              </motion.h2>
-
-              <motion.p
-                className="text-[var(--text-secondary)] text-center max-w-md mb-8"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                多智能体AI助手，支持深度研究、数据分析与智能报告生成
-              </motion.p>
-
-              <motion.div
-                className="grid grid-cols-2 md:grid-cols-4 gap-3"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                {quickActions.map((action, i) => (
-                  <motion.button
-                    key={i}
-                    onClick={() => setInputValue(`帮我进行${action.label}`)}
-                    className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl border border-[var(--border-default)] bg-[var(--nexus-abyss)]/50 hover:border-[var(--border-glow)] hover:bg-[var(--nexus-surface)]/30 transition-all group"
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div
-                      className="text-[var(--text-tertiary)] group-hover:text-[var(--text-primary)] transition-colors"
-                      style={{ color: action.color }}
+                return (
+                  <>
+                    <motion.div
+                      key={agentMode}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: 'spring', duration: 0.5 }}
+                      className="mb-6"
                     >
-                      {action.icon}
-                    </div>
-                    <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]">
-                      {action.label}
-                    </span>
-                  </motion.button>
-                ))}
-              </motion.div>
+                      <div
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300"
+                        style={{
+                          background: `linear-gradient(135deg, ${displayColor}, ${displayColor}99)`,
+                          boxShadow: `0 8px 32px ${displayColor}40`
+                        }}
+                      >
+                        <span className="text-white scale-[2]">
+                          {displayIcon}
+                        </span>
+                      </div>
+                    </motion.div>
+
+                    <motion.h2
+                      key={`title-${agentMode}`}
+                      className="text-2xl font-bold mb-2"
+                      style={{ fontFamily: 'Orbitron, sans-serif' }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      开启 <span className="text-gradient-neural">{displayLabel}</span>
+                    </motion.h2>
+
+                    <motion.p
+                      key={`desc-${agentMode}`}
+                      className="text-[var(--text-secondary)] text-center max-w-md mb-4 text-sm"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {displayDesc}
+                    </motion.p>
+
+                    <motion.p
+                      className="text-[var(--text-tertiary)] text-center text-xs"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      {isDefaultChat ? '选择下方功能模式，或直接开始对话' : '点击已选模式可取消，回到普通对话'}
+                    </motion.p>
+                  </>
+                );
+              })()}
             </div>
           ) : (
             /* Messages */
@@ -3061,13 +3150,20 @@ export default function ChatPage() {
         {/* Input Area */}
         <div className="px-6 py-4 bg-gradient-to-t from-[var(--nexus-void)] via-[var(--nexus-void)]/95 to-transparent">
           <div className="max-w-3xl mx-auto">
+            {/* Agent Mode Selector - 放在输入框上方 */}
+            <AgentModeSelector
+              selectedMode={agentMode}
+              onModeChange={setAgentMode}
+              disabled={isLoading}
+            />
+
             <div className="nexus-card p-3 rounded-2xl shadow-lg">
               <textarea
                 ref={textareaRef}
                 value={inputValue}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder="输入消息"
+                placeholder={agentMode === 'chat' ? '输入消息...' : `输入${agentModes.find(m => m.id === agentMode)?.label}任务...`}
                 rows={1}
                 disabled={isLoading}
                 className="w-full bg-transparent text-[var(--text-primary)] text-sm outline-none resize-none max-h-[200px] leading-relaxed placeholder:text-[var(--text-tertiary)] disabled:opacity-50 mb-2 border-none focus:ring-0"
@@ -3075,24 +3171,24 @@ export default function ChatPage() {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                  <button onClick={handleEnhancementsClick} className="nexus-btn-icon relative" title="增强功能">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <button onClick={handleEnhancementsClick} className="nexus-btn-icon relative w-7 h-7 !p-0" title="增强功能">
+                    <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                     </svg>
                     {(webSearchEnabled || codeInterpreterEnabled) && (
-                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[var(--nexus-cyan)] rounded-full" />
+                      <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-[var(--nexus-cyan)] rounded-full" />
                     )}
                   </button>
-                  <button className="nexus-btn-icon opacity-50 cursor-not-allowed" title="附件" disabled>
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <button className="nexus-btn-icon w-7 h-7 !p-0 opacity-50 cursor-not-allowed" title="附件" disabled>
+                    <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
                     </svg>
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {(webSearchEnabled || codeInterpreterEnabled) && (
-                    <div className="flex items-center gap-1.5 mr-2">
+                    <div className="flex items-center gap-1.5 mr-1">
                       {webSearchEnabled && (
                         <span className="px-2 py-0.5 text-[10px] rounded-md bg-[var(--nexus-cyan)]/10 text-[var(--nexus-cyan)] border border-[var(--nexus-cyan)]/20">
                           联网
@@ -3108,10 +3204,10 @@ export default function ChatPage() {
 
                   <button
                     onClick={isRecording ? stopRecording : startRecording}
-                    className={`nexus-btn-icon ${isRecording ? 'text-[var(--nexus-error)] animate-pulse bg-[var(--nexus-error)]/10' : ''}`}
+                    className={`nexus-btn-icon w-7 h-7 !p-0 ${isRecording ? 'text-[var(--nexus-error)] animate-pulse bg-[var(--nexus-error)]/10' : ''}`}
                     title={isRecording ? '停止录音' : '语音输入'}
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
                       <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
                     </svg>
@@ -3120,11 +3216,11 @@ export default function ChatPage() {
                   {isLoading ? (
                     <motion.button
                       onClick={stopGeneration}
-                      className="w-9 h-9 rounded-xl bg-[var(--nexus-error)] text-white flex items-center justify-center"
+                      className="w-7 h-7 rounded-lg bg-[var(--nexus-error)] text-white flex items-center justify-center"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                         <rect x="6" y="6" width="12" height="12" rx="2"/>
                       </svg>
                     </motion.button>
@@ -3132,7 +3228,7 @@ export default function ChatPage() {
                     <motion.button
                       onClick={handleSendMessage}
                       disabled={!inputValue.trim()}
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
                         inputValue.trim()
                           ? 'bg-gradient-neural text-white shadow-lg shadow-[var(--nexus-cyan)]/20'
                           : 'bg-[var(--nexus-surface)] text-[var(--text-tertiary)] cursor-not-allowed'
@@ -3140,7 +3236,7 @@ export default function ChatPage() {
                       whileHover={{ scale: inputValue.trim() ? 1.05 : 1 }}
                       whileTap={{ scale: inputValue.trim() ? 0.95 : 1 }}
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/>
                       </svg>
                     </motion.button>
