@@ -47,6 +47,7 @@ class StepType(str, Enum):
     # === 第一层：核心阶段分类 ===
     RESEARCH = "research"                          # 信息检索与资料收集阶段
     HUMAN_INVOLVEMENT = "human_involvement"        # 需要人类参与决策的阶段
+    TEMPLATE_SEARCH = "template_search"            # 模版搜索阶段
     # === 第三层：蓝图优化与整合 ===
     WRITING_BLUEPRINT = "writing_blueprint"  # 蓝图优化（综合审查与质量提升）
 

@@ -1,40 +1,120 @@
 # -*- coding: utf-8 -*-
 """
 @File    :   template_outline_schema.py
-@Time    :   2025/12/03
-@Desc    :   模版大纲提取 Schema - LLM 结构化输出用
+@Time    :   2025/11/28
+@Desc    :   模版大纲 Schema - 用于从用户上传文件中提取模版结构
 """
 
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
-from typing import List, Optional
 
 
-class SectionInfo(BaseModel):
-    """章节信息"""
-    title: str = Field(..., description="章节标题")
-    description: str = Field("", description="章节描述/写作指导")
-    estimated_percentage: float = Field(0, description="预估占比(%)")
-    key_points: List[str] = Field(default_factory=list, description="关键要点")
+class TemplateSection(BaseModel):
+    """模版章节结构"""
+
+    title: str = Field(
+        ...,
+        description="章节标题，如：'公司概况'、'经营业绩'、'风险管理'"
+    )
+
+    description: str = Field(
+        ...,
+        description=(
+            "该章节的目的和内容范围，说明这个章节要写什么。"
+            "例如：'介绍公司基本情况，包括发展历程、组织架构和核心业务'"
+        )
+    )
+
+    estimated_percentage: float = Field(
+        default=0.1,
+        description="该章节占总字数的百分比，如 0.2 表示 20%"
+    )
+
+    key_points: List[str] = Field(
+        default_factory=list,
+        description=(
+            "该章节应覆盖的关键要点列表。"
+            "例如：['公司简介', '发展历程', '组织架构', '核心业务']"
+        )
+    )
 
 
 class TemplateOutline(BaseModel):
     """
-    模版大纲 - LLM 结构化输出
+    模版大纲结构化输出
 
-    用于 LangChain with_structured_output() 调用，
-    从文档内容中提取写作模版的结构信息。
+    用于从用户上传的文件中提取模版结构，
+    存入向量库供 Planner 检索和参考
     """
-    title: str = Field(..., description="模版标题")
-    summary: str = Field(..., description="模版摘要（50-100字描述模版用途）")
-    category: str = Field(..., description="分类（如：市场分析、信用评级、行业研究）")
-    writing_style: str = Field(
-        "business",
-        description="写作风格（academic/business/technical/creative/journalistic）"
+
+    # ========== 基础信息（检索用）==========
+    title: str = Field(
+        ...,
+        description=(
+            "模版名称，准确概括模版类型。"
+            "例如：'银行年度报告模版'、'行业研究报告模版'、'产品需求文档模版'"
+        )
     )
-    writing_tone: str = Field(
-        "neutral",
-        description="写作语气（formal/neutral/casual/professional/persuasive）"
+
+    summary: str = Field(
+        ...,
+        description=(
+            "模版简介，200-300字。"
+            "描述该模版的用途、适用场景和主要特点。"
+            "用于向量化检索，需要包含足够的语义信息。"
+        )
     )
-    target_audience: Optional[str] = Field(None, description="目标受众")
-    sections: List[SectionInfo] = Field(default_factory=list, description="章节列表")
-    special_requirements: Optional[str] = Field(None, description="特殊要求")
+
+    category: str = Field(
+        ...,
+        description=(
+            "模版分类。"
+            "例如：'年度报告'、'行业研究'、'技术文档'、'商业计划书'、'产品文档'"
+        )
+    )
+
+    # ========== 风格规范 ==========
+    writing_style: Literal[
+        "academic",      # 学术论文
+        "business",      # 商业报告
+        "technical",     # 技术文档
+        "journalistic",  # 新闻报道
+        "casual"         # 非正式
+    ] = Field(
+        default="business",
+        description="写作风格"
+    )
+
+    writing_tone: Literal[
+        "neutral",       # 客观中立
+        "authoritative", # 权威专业
+        "enthusiastic",  # 积极正面
+        "critical",      # 批判分析
+        "empathetic"     # 共情理解
+    ] = Field(
+        default="neutral",
+        description="写作语气"
+    )
+
+    target_audience: str = Field(
+        ...,
+        description=(
+            "目标读者群体。"
+            "例如：'公司管理层和投资者'、'技术开发人员'、'行业分析师'"
+        )
+    )
+
+    # ========== 结构信息 ==========
+    sections: List[TemplateSection] = Field(
+        ...,
+        description="模版的章节结构列表"
+    )
+
+    # ========== 可选信息 ==========
+    special_requirements: Optional[str] = Field(
+        None,
+        description=(
+            "特殊要求或注意事项。"
+            "例如：'需要包含风险披露章节'、'必须有数据图表支撑'"
+        )
+    )

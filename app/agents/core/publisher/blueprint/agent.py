@@ -23,9 +23,10 @@ from app.agents.core.publisher.blueprint.nodes.nodes import (
     route_step,
     _route_decision,  # 条件函数，用于 add_conditional_edges
 
-    # 三个独立的执行节点
+    # 四个独立的执行节点
     execute_research_node,
     execute_human_involvement_node,
+    execute_template_search_node,
     execute_writing_blueprint_node,
 
     # 条件判断函数
@@ -83,11 +84,12 @@ def build_agent():
     workflow.add_node("route_step", route_step)
     logger.info("   ✓ 路由节点: route_step")
 
-    # 三个独立的执行节点
+    # 四个独立的执行节点
     workflow.add_node("execute_research", execute_research_node)
     workflow.add_node("execute_human_involvement", execute_human_involvement_node)
+    workflow.add_node("execute_template_search", execute_template_search_node)
     workflow.add_node("execute_writing_blueprint", execute_writing_blueprint_node)
-    logger.info("   ✓ 执行节点: execute_research, execute_human_involvement, execute_writing_blueprint")
+    logger.info("   ✓ 执行节点: execute_research, execute_human_involvement, execute_template_search, execute_writing_blueprint")
     logger.info("")
 
     # ==================== 定义工作流转换 ====================
@@ -112,15 +114,16 @@ def build_agent():
         {
             "execute_research": "execute_research",
             "execute_human_involvement": "execute_human_involvement",
+            "execute_template_search": "execute_template_search",
             "execute_writing_blueprint": "execute_writing_blueprint",
             "__end__": END
         }
     )
-    logger.info("   ✓ route_step -> [execute_research | execute_human_involvement | execute_writing_blueprint | END]")
+    logger.info("   ✓ route_step -> [execute_research | execute_human_involvement | execute_template_search | execute_writing_blueprint | END]")
 
-    # 5. 三个执行节点完成后 -> should_replan 判断
+    # 5. 四个执行节点完成后 -> should_replan 判断
     # 根据情况：继续执行(route_step) / 重新规划(replan) / 结束(END)
-    for node_name in ["execute_research", "execute_human_involvement", "execute_writing_blueprint"]:
+    for node_name in ["execute_research", "execute_human_involvement", "execute_template_search", "execute_writing_blueprint"]:
         workflow.add_conditional_edges(
             node_name,
             should_replan,  # 判断函数
